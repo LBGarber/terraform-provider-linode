@@ -23,7 +23,18 @@ func TestAccLinodeObjectStorageLifecycle_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckLinodeObjectStorageBucketLifecycleConfigBasic(bucketName, keyName),
-				Check:  resource.ComposeTestCheckFunc(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "bucket", bucketName),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "cluster", "us-east-1"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.#", "1"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.id", "test-rule"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.prefix", "tf"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.enabled", "true"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.expiration.#", "1"),
+					//resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.expiration.0.days", "7"),
+					//resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.expiration.0.expired_object_delete_marker", "true"),
+					resource.TestCheckResourceAttrSet(testObjectStorageLifecycleResName, "lifecycle_rule.0.expiration.0.date"),
+				),
 			},
 		},
 	})
@@ -43,7 +54,7 @@ resource "linode_object_storage_lifecycle" "foocycle" {
 		enabled = true
 
 		expiration {
-			days = 7
+			date = "2021-06-21"
 		}
 	}
 }`)

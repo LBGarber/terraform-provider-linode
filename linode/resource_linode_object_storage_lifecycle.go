@@ -212,7 +212,7 @@ func expandLifecycleRules(ruleSpecs []interface{}) ([]*s3.LifecycleRule, error) 
 			expirationMap := expirationList[0].(map[string]interface{})
 
 			if dateStr, ok := expirationMap["date"].(string); ok && dateStr != "" {
-				date, err := time.Parse(time.RFC3339, dateStr)
+				date, err := time.Parse(time.RFC3339, fmt.Sprintf("%sT00:00:00Z", dateStr))
 				if err != nil {
 					return nil, err
 				}
@@ -274,7 +274,7 @@ func flattenLifecycleRules(rules []*s3.LifecycleRule) []map[string]interface{} {
 			e := make(map[string]interface{})
 
 			if date := rule.Expiration.Date; date != nil {
-				e["date"] = rule.Expiration.Date.Format(time.RFC3339)
+				e["date"] = rule.Expiration.Date.Format("2006-01-02")
 			}
 
 			if days := rule.Expiration.Days; days != nil {
