@@ -162,12 +162,33 @@ func resourceLinodeObjectStorageLifecycleCreate(d *schema.ResourceData, meta int
 }
 
 func resourceLinodeObjectStorageLifecycleUpdate(d *schema.ResourceData, meta interface{}) error {
+	bucket := d.Get("bucket").(string)
 
-	return nil
+	client := s3ConnFromResourceData(d)
+
+	deleteConfig := &s3.DeleteBucketLifecycleInput{
+		Bucket: &bucket,
+	}
+
+	if _, err := client.DeleteBucketLifecycle(deleteConfig); err != nil {
+		return err
+	}
+
+	return resourceLinodeObjectStorageLifecycleCreate(d, meta)
 }
 
 func resourceLinodeObjectStorageLifecycleDelete(d *schema.ResourceData, meta interface{}) error {
-	return nil
+	bucket := d.Get("bucket").(string)
+
+	client := s3ConnFromResourceData(d)
+
+	deleteConfig := &s3.DeleteBucketLifecycleInput{
+		Bucket: &bucket,
+	}
+
+	_, err := client.DeleteBucketLifecycle(deleteConfig)
+
+	return err
 }
 
 func expandLifecycleRules(ruleSpecs []interface{}) ([]*s3.LifecycleRule, error) {

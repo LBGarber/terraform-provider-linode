@@ -37,6 +37,20 @@ func TestAccLinodeObjectStorageLifecycle_basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet(testObjectStorageLifecycleResName, "lifecycle_rule.0.expiration.0.date"),
 				),
 			},
+			{
+				Config: testAccCheckLinodeObjectStorageLifecycleUpdates(bucketName, keyName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "bucket", bucketName),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "cluster", "us-east-1"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.#", "1"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.id", "test-rule-update"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.prefix", "tf-update"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.enabled", "false"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.abort_incomplete_multipart_upload_days", "42"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.expiration.#", "1"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.expiration.0.days", "37"),
+				),
+			},
 		},
 	})
 }
@@ -61,4 +75,26 @@ resource "linode_object_storage_lifecycle" "foocycle" {
 		}
 	}
 }`)
+}
+
+func testAccCheckLinodeObjectStorageLifecycleUpdates(name, keyName string) string {
+	return testAccCheckLinodeObjectStorageBucketConfigBasic(name) + testAccCheckLinodeObjectStorageKeyConfigBasic(keyName) + `
+resource "linode_object_storage_lifecycle" "foocycle" {
+	bucket     = linode_object_storage_bucket.foobar.label
+	cluster    = "us-east-1"
+	access_key = linode_object_storage_key.foobar.access_key
+	secret_key = linode_object_storage_key.foobar.secret_key
+	
+	lifecycle_rule {
+		id = "test-rule-update"
+		prefix = "tf-update"
+		enabled = false
+
+		abort_incomplete_multipart_upload_days = 42
+
+		expiration {
+			days = 37
+		}
+	}
+}`
 }
