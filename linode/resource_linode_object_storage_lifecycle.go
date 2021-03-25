@@ -13,14 +13,17 @@ func resourceLinodeObjectStorageLifecycleExpiration() *schema.Resource {
 			"date": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"days": {
 				Type:     schema.TypeInt,
 				Optional: true,
+				Computed: true,
 			},
 			"expired_object_delete_marker": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Computed: true,
 			},
 		},
 	}
@@ -43,10 +46,12 @@ func resourceLinodeObjectStorageLifecycleRule() *schema.Resource {
 			"id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"prefix": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"enabled": {
 				Type:     schema.TypeBool,
@@ -55,16 +60,19 @@ func resourceLinodeObjectStorageLifecycleRule() *schema.Resource {
 			"abort_incomplete_multipart_upload_days": {
 				Type:     schema.TypeInt,
 				Optional: true,
+				Computed: true,
 			},
 			"expiration": {
 				Type:     schema.TypeList,
 				Optional: true,
+				Computed: true,
 				MaxItems: 1,
 				Elem:     resourceLinodeObjectStorageLifecycleExpiration(),
 			},
 			"noncurrent_version_expiration": {
 				Type:     schema.TypeList,
 				Optional: true,
+				Computed: true,
 				MaxItems: 1,
 				Elem:     resourceLinodeObjectStorageLifecycleNoncurrentExp(),
 			},
@@ -124,6 +132,7 @@ func resourceLinodeObjectStorageLifecycleRead(d *schema.ResourceData, meta inter
 
 	rules := flattenLifecycleRules(lifecycleConfig.Rules)
 
+	d.SetId(bucket)
 	d.Set("lifecycle_rule", rules)
 
 	return nil
@@ -138,7 +147,7 @@ func resourceLinodeObjectStorageLifecycleCreate(d *schema.ResourceData, meta int
 
 	rules, err := expandLifecycleRules(d.Get("lifecycle_rule").([]interface{}))
 	if err != nil {
-		return fmt.Errorf("Failed to parse lifecycle rules: %s", err)
+		return fmt.Errorf("failed to parse lifecycle rules: %s", err)
 	}
 
 	lifecycleConfig.Rules = rules
@@ -148,12 +157,19 @@ func resourceLinodeObjectStorageLifecycleCreate(d *schema.ResourceData, meta int
 		LifecycleConfiguration: lifecycleConfig,
 	}
 
-	client.PutBucketLifecycleConfiguration(inputConfig)
+	if _, err = client.PutBucketLifecycleConfiguration(inputConfig); err != nil {
+		return err
+	}
 
-	return resourceLinodeObjectStorageLifecycleRead(d, meta)
+	if err := resourceLinodeObjectStorageLifecycleRead(d, meta); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func resourceLinodeObjectStorageLifecycleUpdate(d *schema.ResourceData, meta interface{}) error {
+
 	return nil
 }
 
@@ -183,21 +199,20 @@ func expandLifecycleRules(ruleSpecs []interface{}) ([]*s3.LifecycleRule, error) 
 			rule.Prefix = &prefix
 		}
 
-		rule.AbortIncompleteMultipartUpload = &s3.AbortIncompleteMultipartUpload{}
-
-		if abortIncompleteDays, ok := ruleSpec["abort_incomplete_multipart_upload_days"]; ok {
-			abortIncompleteDays := int64(abortIncompleteDays.(int))
+		if abortIncompleteDays, ok := ruleSpec["abort_incomplete_multipart_upload_days"].(int); ok && abortIncompleteDays > 0 {
+			rule.AbortIncompleteMultipartUpload = &s3.AbortIncompleteMultipartUpload{}
+			abortIncompleteDays := int64(abortIncompleteDays)
 
 			rule.AbortIncompleteMultipartUpload.DaysAfterInitiation = &abortIncompleteDays
 		}
 
-		rule.Expiration = &s3.LifecycleExpiration{}
-
 		if expirationList := ruleSpec["expiration"].([]interface{}); len(expirationList) > 0 {
+			rule.Expiration = &s3.LifecycleExpiration{}
+
 			expirationMap := expirationList[0].(map[string]interface{})
 
-			if dateStr, ok := expirationMap["date"]; ok {
-				date, err := time.Parse(time.RFC3339, dateStr.(string))
+			if dateStr, ok := expirationMap["date"].(string); ok && dateStr != "" {
+				date, err := time.Parse(time.RFC3339, dateStr)
 				if err != nil {
 					return nil, err
 				}
@@ -205,22 +220,20 @@ func expandLifecycleRules(ruleSpecs []interface{}) ([]*s3.LifecycleRule, error) 
 				rule.Expiration.Date = &date
 			}
 
-			if days, ok := expirationMap["days"]; ok {
-				days := int64(days.(int))
+			if days, ok := expirationMap["days"].(int); ok && days > 0 {
+				days := int64(days)
 
 				rule.Expiration.Days = &days
 			}
 
-			if marker, ok := expirationMap["expired_object_delete_marker"]; ok {
-				marker := marker.(bool)
-
+			if marker, ok := expirationMap["expired_object_delete_marker"].(bool); ok && marker {
 				rule.Expiration.ExpiredObjectDeleteMarker = &marker
 			}
 		}
 
-		rule.NoncurrentVersionExpiration = &s3.NoncurrentVersionExpiration{}
-
 		if expirationList := ruleSpec["noncurrent_version_expiration"].([]interface{}); len(expirationList) > 0 {
+			rule.NoncurrentVersionExpiration = &s3.NoncurrentVersionExpiration{}
+
 			expirationMap := expirationList[0].(map[string]interface{})
 
 			if days, ok := expirationMap["days"]; ok {
@@ -239,20 +252,52 @@ func flattenLifecycleRules(rules []*s3.LifecycleRule) []map[string]interface{} {
 	result := make([]map[string]interface{}, len(rules))
 
 	for i, rule := range rules {
-		result[i] = map[string]interface{}{
-			"id":                                     rule.ID,
-			"prefix":                                 rule.Prefix,
-			"enabled":                                *rule.Status == "Enabled",
-			"abort_incomplete_multipart_upload_days": rule.AbortIncompleteMultipartUpload.DaysAfterInitiation,
-			"expiration": map[string]interface{}{
-				"date":                         rule.Expiration.Date.Format(time.RFC3339),
-				"days":                         rule.Expiration.Days,
-				"expired_object_delete_marker": rule.Expiration.ExpiredObjectDeleteMarker,
-			},
-			"noncurrent_version_expiration": map[string]interface{}{
-				"days": rule.NoncurrentVersionExpiration.NoncurrentDays,
-			},
+		ruleMap := make(map[string]interface{})
+
+		if id := rule.ID; id != nil {
+			ruleMap["id"] = *id
 		}
+
+		if prefix := rule.Prefix; prefix != nil {
+			ruleMap["prefix"] = *prefix
+		}
+
+		if status := rule.Status; status != nil {
+			ruleMap["enabled"] = *status == "Enabled"
+		}
+
+		if rule.AbortIncompleteMultipartUpload != nil {
+			ruleMap["abort_incomplete_multipart_upload_days"] = *rule.AbortIncompleteMultipartUpload.DaysAfterInitiation
+		}
+
+		if rule.Expiration != nil {
+			e := make(map[string]interface{})
+
+			if date := rule.Expiration.Date; date != nil {
+				e["date"] = rule.Expiration.Date.Format(time.RFC3339)
+			}
+
+			if days := rule.Expiration.Days; days != nil {
+				e["days"] = *days
+			}
+
+			if marker := rule.Expiration.ExpiredObjectDeleteMarker; marker != nil && *marker {
+				e["expired_object_delete_marker"] = *marker
+			}
+
+			ruleMap["expiration"] = []interface{}{e}
+		}
+
+		if rule.NoncurrentVersionExpiration != nil {
+			e := make(map[string]interface{})
+
+			if days := rule.NoncurrentVersionExpiration.NoncurrentDays; days != nil && *days > 0 {
+				e["days"] = *days
+				ruleMap["noncurrent_version_expiration"] = []interface{}{e}
+			}
+		}
+
+		result[i] = ruleMap
 	}
 
 	return result

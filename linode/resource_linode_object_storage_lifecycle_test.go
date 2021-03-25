@@ -22,16 +22,14 @@ func TestAccLinodeObjectStorageLifecycle_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeObjectStorageKeyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeObjectStorageBucketLifestyleConfigBasic(bucketName, keyName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(testObjectStorageObjectResName, "lifecycle_rule.#", "1"),
-				),
+				Config: testAccCheckLinodeObjectStorageBucketLifecycleConfigBasic(bucketName, keyName),
+				Check:  resource.ComposeTestCheckFunc(),
 			},
 		},
 	})
 }
 
-func testAccCheckLinodeObjectStorageBucketLifestyleConfigBasic(name, keyName string) string {
+func testAccCheckLinodeObjectStorageBucketLifecycleConfigBasic(name, keyName string) string {
 	return testAccCheckLinodeObjectStorageBucketConfigBasic(name) + testAccCheckLinodeObjectStorageKeyConfigBasic(keyName) + fmt.Sprintf(`
 resource "linode_object_storage_lifecycle" "foocycle" {
 	bucket     = linode_object_storage_bucket.foobar.label
@@ -41,7 +39,12 @@ resource "linode_object_storage_lifecycle" "foocycle" {
 	
 	lifecycle_rule {
 		id = "test-rule"
+		prefix = "tf"
 		enabled = true
+
+		expiration {
+			days = 7
+		}
 	}
 }`)
 }
