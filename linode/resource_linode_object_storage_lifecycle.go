@@ -13,17 +13,14 @@ func resourceLinodeObjectStorageLifecycleExpiration() *schema.Resource {
 			"date": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 			},
 			"days": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Computed: true,
 			},
 			"expired_object_delete_marker": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Computed: true,
 			},
 		},
 	}
@@ -51,7 +48,6 @@ func resourceLinodeObjectStorageLifecycleRule() *schema.Resource {
 			"prefix": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 			},
 			"enabled": {
 				Type:     schema.TypeBool,
@@ -60,19 +56,16 @@ func resourceLinodeObjectStorageLifecycleRule() *schema.Resource {
 			"abort_incomplete_multipart_upload_days": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Computed: true,
 			},
 			"expiration": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Computed: true,
 				MaxItems: 1,
 				Elem:     resourceLinodeObjectStorageLifecycleExpiration(),
 			},
 			"noncurrent_version_expiration": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Computed: true,
 				MaxItems: 1,
 				Elem:     resourceLinodeObjectStorageLifecycleNoncurrentExp(),
 			},

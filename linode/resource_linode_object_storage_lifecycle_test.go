@@ -31,6 +31,7 @@ func TestAccLinodeObjectStorageLifecycle_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.prefix", "tf"),
 					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.enabled", "true"),
 					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.expiration.#", "1"),
+					resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.abort_incomplete_multipart_upload_days", "5"),
 					//resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.expiration.0.days", "7"),
 					//resource.TestCheckResourceAttr(testObjectStorageLifecycleResName, "lifecycle_rule.0.expiration.0.expired_object_delete_marker", "true"),
 					resource.TestCheckResourceAttrSet(testObjectStorageLifecycleResName, "lifecycle_rule.0.expiration.0.date"),
@@ -52,6 +53,8 @@ resource "linode_object_storage_lifecycle" "foocycle" {
 		id = "test-rule"
 		prefix = "tf"
 		enabled = true
+
+		abort_incomplete_multipart_upload_days = 5
 
 		expiration {
 			date = "2021-06-21"
