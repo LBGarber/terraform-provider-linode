@@ -468,8 +468,7 @@ func dataSourceLinodeInstanceFilter() *schema.Resource {
 
 func dataSourceLinodeInstances() *schema.Resource {
 	return &schema.Resource{
-		Read: nil,
-
+		Read: dataSourceLinodeInstancesRead,
 		Schema: map[string]*schema.Schema{
 			"filter": {
 				Type: schema.TypeList,
@@ -477,7 +476,7 @@ func dataSourceLinodeInstances() *schema.Resource {
 				Required: true,
 				Elem: dataSourceLinodeInstanceFilter(),
 			},
-			"linodes": {
+			"linode": {
 				Type: schema.TypeList,
 				Computed: true,
 				Elem: dataSourceLinodeInstance(),
@@ -500,10 +499,93 @@ func dataSourceLinodeInstancesRead(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return fmt.Errorf("failed to get instances: %s", err)
 	}
+
+	instancesArr := make([]map[string]interface{}, len(instances))
+	for i, instance := range instances {
+		instanceMap, err := linodeInstanceToMap(&client, &instance)
+		if err != nil {
+			return fmt.Errorf("failed to translate instance to map: %s", err)
+		}
+
+		instancesArr[i] = instanceMap
+	}
+
+	d.Set("linode", instancesArr)
+
+	return nil
 }
 
-func dataSourceLInodeInstanceRead(instance *linodego.Instance, d *schema.ResourceData, meta interface{}) error {
+func linodeInstanceToMap(client *linodego.Client, instance *linodego.Instance) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
 
+	id := instance.ID
+
+	instanceNetwork, err := client.GetInstanceIPAddresses(context.Background(), int(id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ips for linode instance %s: %s", id, err)
+	}
+
+	var ips []string
+	for _, ip := range instance.IPv4 {
+		ips = append(ips, ip.String())
+	}
+	result["ipv4"] = ips
+	result["ipv6"] = instance.IPv6
+	public, private := instanceNetwork.IPv4.Public, instanceNetwork.IPv4.Private
+
+	if len(public) > 0 {
+		result["ip_address"] = public[0].Address
+	}
+
+	if len(private) > 0 {
+		result["private_ip"] = true
+		result["private_ip_address"] = private[0].Address
+	} else {
+		result["private_ip"] = false
+	}
+
+	result["label"] = instance.Label
+	result["status"] = instance.Status
+	result["type"] = instance.Type
+	result["region"] = instance.Region
+	result["watchdog_enabled"] = instance.WatchdogEnabled
+	result["group"] = instance.Group
+	result["tags"] = instance.Tags
+
+	flatSpecs := flattenInstanceSpecs(*instance)
+	flatAlerts := flattenInstanceAlerts(*instance)
+	flatBackups := flattenInstanceBackups(*instance)
+
+	result["backups"] = flatBackups
+	result["specs"] = flatSpecs
+	result["alerts"] = flatAlerts
+
+	instanceDisks, err := client.ListInstanceDisks(context.Background(), int(id), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the disks for the Linode instance %d: %s", id, err)
+	}
+
+	disks, swapSize := flattenInstanceDisks(instanceDisks)
+	result["disk"] = disks
+	result["swap_size"] = swapSize
+
+	instanceConfigs, err := client.ListInstanceConfigs(context.Background(), int(id), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the config for Linode instance %d (%s): %s", id, instance.Label, err)
+	}
+	diskLabelIDMap := make(map[int]string, len(instanceDisks))
+	for _, disk := range instanceDisks {
+		diskLabelIDMap[disk.ID] = disk.Label
+	}
+
+	configs := flattenInstanceConfigs(instanceConfigs, diskLabelIDMap)
+
+	result["config"] = configs
+	if len(instanceConfigs) == 1 {
+		result["boot_config_label"] = instanceConfigs[0].Label
+	}
+
+	return result, nil
 }
 
 func constructInstanceFilter(d *schema.ResourceData) (string, error) {
