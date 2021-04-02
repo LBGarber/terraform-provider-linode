@@ -91,6 +91,8 @@ resource "linode_instance" "foobar" {
 	image = "linode/ubuntu18.04"
 	region = "us-east"
 	root_pass = "terraform-test"
+	swap_size = 256
+	private_ip = true
 }
 `, instance) + `
 data "linode_instances" "foobar" {
@@ -132,8 +134,6 @@ resource "linode_instance" "foobar" {
 	image = "linode/ubuntu18.04"
 	region = "us-east"
 	root_pass = "terraform-test"
-	swap_size = 256
-	private_ip = true
 }
 `, instance) + `
 data "linode_instances" "foobar" {}
