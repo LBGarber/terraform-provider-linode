@@ -108,12 +108,6 @@ func dataSourceLinodeInstance() *schema.Resource {
 				Description: "A list of Linode usernames. If the usernames have associated SSH keys, the keys will be appended to the `root` user's `~/.ssh/authorized_keys` file automatically. Only accepted if 'image' is provided.",
 				Computed:    true,
 			},
-			"root_pass": {
-				Type:        schema.TypeString,
-				Description: "The password that will be initialially assigned to the 'root' user account.",
-				Sensitive:   true,
-				Computed:    true,
-			},
 			"swap_size": {
 				Type:        schema.TypeInt,
 				Description: "When deploying from an Image, this field is optional with a Linode API default of 512mb, otherwise it is ignored. This is used to set the swap disk size for the newly-created Linode.",
@@ -408,11 +402,6 @@ func dataSourceLinodeInstance() *schema.Resource {
 						"stackscript_data": {
 							Type:        schema.TypeMap,
 							Description: "An object containing responses to any User Defined Fields present in the StackScript being deployed to this Linode. Only accepted if 'stackscript_id' is given. The required values depend on the StackScript being deployed.",
-							Computed:    true,
-						},
-						"root_pass": {
-							Type:        schema.TypeString,
-							Description: "The password that will be initialially assigned to the 'root' user account.",
 							Computed:    true,
 						},
 					},
