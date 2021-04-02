@@ -11,7 +11,9 @@ Provides information about Linode instances that match a set of filters.
 Provides information about Linode instances that match a set of filters.
 
 ## Example Usage
-####Get information about all Linode instances with a certain label and tag: 
+
+Get information about all Linode instances with a certain label and tag:
+
 ```hcl
 data "linode_instances" "my-instances" {
   filter {
@@ -26,7 +28,8 @@ data "linode_instances" "my-instances" {
 }
 ```
 
-####Get information about all Linode instances associated with the current token:
+Get information about all Linode instances associated with the current token:
+
 ```hcl
 data "linode_instances" "all-instances" {}
 ```
@@ -57,7 +60,7 @@ Each Linode instance will be stored in the `linode` attribute and will export th
 
 * `tags` - A list of tags applied to this object. Tags are for organizational purposes only.
 
-* `private_ip` - If true, the Linode has private networking enabled, allowing use of the 192.168.128.0/17 network within the Linode's region. 
+* `private_ip` - If true, the Linode has private networking enabled, allowing use of the 192.168.128.0/17 network within the Linode's region.
   
 * `alerts.0.cpu` - The percentage of CPU usage required to trigger an alert. If the average CPU usage over two hours exceeds this value, we'll send you an alert. If this is set to 0, the alert is disabled.
 
@@ -99,66 +102,66 @@ Each Linode instance will be stored in the `linode` attribute and will export th
 
 * [`backups`](#backups) - Information about the Linode's backup status.
 
-#### Disks
+### Disks
 
 * `disk`
 
-    * `label` - The disks label, which acts as an identifier in Terraform.  This must be unique within each Linode Instance.
+  * `label` - The disks label, which acts as an identifier in Terraform.  This must be unique within each Linode Instance.
 
-    * `size` - The size of the Disk in MB.
+  * `size` - The size of the Disk in MB.
 
-    * `id` - The ID of the disk in the Linode API.
+  * `id` - The ID of the disk in the Linode API.
 
-    * `filesystem` - The Disk filesystem can be one of: `"raw"`, `"swap"`, `"ext3"`, `"ext4"`, or `"initrd"` which has a max size of 32mb and can be used in the config `initrd` (not currently supported in this Terraform Provider).
-    
-#### Configs
+  * `filesystem` - The Disk filesystem can be one of: `"raw"`, `"swap"`, `"ext3"`, `"ext4"`, or `"initrd"` which has a max size of 32mb and can be used in the config `initrd` (not currently supported in this Terraform Provider).
+
+### Configs
 
 Configuration profiles define the VM settings and boot behavior of the Linode Instance.  Multiple configurations profiles can be provided but their `label` values must be unique.
 
 * `config`
 
-    * `label` - The Config's label for display purposes.  Also used by `boot_config_label`.
-  
-    * `kernel` -  - A Kernel ID to boot a Linode with. Default is based on image choice. Examples are `linode/latest-64bit`, `linode/grub2`, `linode/direct-disk`, etc. See all kernels [here](https://api.linode.com/v4/linode/kernels). Note that this is a paginated API endpoint ([docs](https://developers.linode.com/api/v4/linode-kernels)).
-        
-    * `run_level` -  - Defines the state of your Linode after booting.
-        
-    * `virt_mode` -  - Controls the virtualization mode. 
-        
-    * `root_device` -  - The root device to boot.
-      
-    * `comments` -  - Arbitrary user comments about this `config`.
-        
-    * `memory_limit` -  - Defaults to the total RAM of the Linode
+  * `label` - The Config's label for display purposes.  Also used by `boot_config_label`.
 
-    * `helpers` - Helpers enabled when booting to this Linode Config.
+  * `kernel` - A Kernel ID to boot a Linode with. Default is based on image choice. Examples are `linode/latest-64bit`, `linode/grub2`, `linode/direct-disk`, etc. See all kernels [here](https://api.linode.com/v4/linode/kernels). Note that this is a paginated API endpoint ([docs](https://developers.linode.com/api/v4/linode-kernels)).
 
-        * `updatedb_disabled` -  Disables updatedb cron job to avoid disk thrashing.
+  * `run_level` - Defines the state of your Linode after booting.
 
-        * `distro` -  Controls the behavior of the Linode Config's Distribution Helper setting.
+  * `virt_mode` - Controls the virtualization mode.
 
-        * `modules_dep` -  Creates a modules dependency file for the Kernel you run.
+  * `root_device` - The root device to boot.
 
-        * `network` -  Controls the behavior of the Linode Config's Network Helper setting, used to automatically configure additional IP addresses assigned to this instance.
+  * `comments` - Arbitrary user comments about this `config`.
 
-    * `devices` -  A list of `disk` or `volume` attachments for this `config`.  If the `boot_config_label` omits a `devices` block, the Linode will not be booted.
+  * `memory_limit` - Defaults to the total RAM of the Linode
 
-        * `sda` ... `sdh` -  The SDA-SDH slots, represent the Linux block device nodes for the first 8 disks attached to the Linode.  Each device must be suplied sequentially.  The device can be either a Disk or a Volume identified by `disk_label` or `volume_id`. Only one disk identifier is permitted per slot. Devices mapped from `sde` through `sdh` are unavailable in `"fullvirt"` `virt_mode`.
+  * `helpers` - Helpers enabled when booting to this Linode Config.
 
-            * `disk_label` -  The `label` of the `disk` to map to this `device` slot.
+    * `updatedb_disabled` -  Disables updatedb cron job to avoid disk thrashing.
 
-            * `volume_id` -  The Volume ID to map to this `device` slot.
+    * `distro` -  Controls the behavior of the Linode Config's Distribution Helper setting.
 
-            * `disk_id` - The Disk ID of the associated `disk_label`, if used.
-    
-#### Backups
+    * `modules_dep` -  Creates a modules dependency file for the Kernel you run.
+
+    * `network` -  Controls the behavior of the Linode Config's Network Helper setting, used to automatically configure additional IP addresses assigned to this instance.
+
+  * `devices` -  A list of `disk` or `volume` attachments for this `config`.  If the `boot_config_label` omits a `devices` block, the Linode will not be booted.
+
+    * `sda` ... `sdh` -  The SDA-SDH slots, represent the Linux block device nodes for the first 8 disks attached to the Linode.  Each device must be suplied sequentially.  The device can be either a Disk or a Volume identified by `disk_label` or `volume_id`. Only one disk identifier is permitted per slot. Devices mapped from `sde` through `sdh` are unavailable in `"fullvirt"` `virt_mode`.
+
+    * `disk_label` -  The `label` of the `disk` to map to this `device` slot.
+
+    * `volume_id` -  The Volume ID to map to this `device` slot.
+
+    * `disk_id` - The Disk ID of the associated `disk_label`, if used
+
+### Backups
 
 * `backups`
 
-    * `enabled` - If this Linode has the Backup service enabled.
+  * `enabled` - If this Linode has the Backup service enabled.
 
-    * `schedule`
+  * `schedule`
 
-        * `day` -  The day of the week that your Linode's weekly Backup is taken. If not set manually, a day will be chosen for you. Backups are taken every day, but backups taken on this day are preferred when selecting backups to retain for a longer period.  If not set manually, then when backups are initially enabled, this may come back as "Scheduling" until the day is automatically selected.
+    * `day` -  The day of the week that your Linode's weekly Backup is taken. If not set manually, a day will be chosen for you. Backups are taken every day, but backups taken on this day are preferred when selecting backups to retain for a longer period.  If not set manually, then when backups are initially enabled, this may come back as "Scheduling" until the day is automatically selected.
 
-        * `window` - The window ('W0'-'W22') in which your backups will be taken, in UTC. A backups window is a two-hour span of time in which the backup may occur. For example, 'W10' indicates that your backups should be taken between 10:00 and 12:00. If you do not choose a backup window, one will be selected for you automatically.  If not set manually, when backups are initially enabled this may come back as Scheduling until the window is automatically selected.
+    * `window` - The window ('W0'-'W22') in which your backups will be taken, in UTC. A backups window is a two-hour span of time in which the backup may occur. For example, 'W10' indicates that your backups should be taken between 10:00 and 12:00. If you do not choose a backup window, one will be selected for you automatically.  If not set manually, when backups are initially enabled this may come back as Scheduling until the window is automatically selected.
