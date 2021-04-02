@@ -445,7 +445,7 @@ func dataSourceLinodeInstances() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"filter": {
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
 				Elem:     dataSourceLinodeInstanceFilter(),
 			},
 			"linode": {
@@ -564,6 +564,10 @@ func flattenLinodeInstance(client *linodego.Client, instance *linodego.Instance)
 func constructInstanceFilter(d *schema.ResourceData) (string, error) {
 	filters := d.Get("filter").([]interface{})
 	resultMap := make(map[string]interface{})
+
+	if len(filters) < 1 {
+		return "{}", nil
+	}
 
 	var rootFilter []interface{}
 
