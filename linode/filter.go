@@ -1,8 +1,9 @@
 package linode
 
 import (
-	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"encoding/json"
 )
 
 // filterTypeFunc is a function that takes in a filter name and value,
