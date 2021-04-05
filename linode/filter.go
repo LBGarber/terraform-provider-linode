@@ -16,7 +16,7 @@ func filterSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		Optional: true,
-		Elem:     &schema.Resource{
+		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"name": {
 					Type:        schema.TypeString,
