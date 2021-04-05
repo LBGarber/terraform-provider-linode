@@ -463,7 +463,7 @@ func flattenLinodeInstance(client *linodego.Client, instance *linodego.Instance)
 }
 
 // instanceValueToFilterType converts the given value to the correct type depending on the filter name.
-func instanceValueToFilterType(filterName string, value string) (interface{}, error) {
+func instanceValueToFilterType(filterName, value string) (interface{}, error) {
 	switch filterName {
 	case "id":
 		return strconv.Atoi(value)
