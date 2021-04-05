@@ -2,7 +2,6 @@ package linode
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -385,7 +384,7 @@ func dataSourceLinodeInstances() *schema.Resource {
 func dataSourceLinodeInstancesRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ProviderMeta).Client
 
-	filter, err := constructInstanceFilter(d)
+	filter, err := constructFilterString(d, instanceValueToFilterType)
 	if err != nil {
 		return fmt.Errorf("failed to construct filter: %s", err)
 	}
@@ -483,52 +482,6 @@ func flattenLinodeInstance(client *linodego.Client, instance *linodego.Instance)
 	}
 
 	return result, nil
-}
-
-// constructInstanceFilter constructs a Linode filter JSON string from each filter element in the schema
-func constructInstanceFilter(d *schema.ResourceData) (string, error) {
-	filters := d.Get("filter").([]interface{})
-	resultMap := make(map[string]interface{})
-
-	if len(filters) < 1 {
-		return "{}", nil
-	}
-
-	var rootFilter []interface{}
-
-	for _, filter := range filters {
-		filter := filter.(map[string]interface{})
-
-		name := filter["name"].(string)
-		values := filter["values"].([]interface{})
-
-		subFilter := make([]interface{}, len(values))
-
-		for i, value := range values {
-			value, err := instanceValueToFilterType(name, value.(string))
-			if err != nil {
-				return "", err
-			}
-
-			valueFilter := make(map[string]interface{})
-			valueFilter[name] = value
-
-			subFilter[i] = valueFilter
-		}
-
-		rootFilter = append(rootFilter, map[string]interface{}{
-			"+or": subFilter,
-		})
-	}
-
-	resultMap["+and"] = rootFilter
-
-	result, err := json.Marshal(resultMap)
-	if err != nil {
-		return "", err
-	}
-
-	return string(result), nil
 }
 
 // instanceValueToFilterType converts the given value to the correct type depending on the filter name.
