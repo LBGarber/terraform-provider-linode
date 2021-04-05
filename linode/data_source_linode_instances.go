@@ -10,7 +10,7 @@ import (
 	"github.com/linode/linodego"
 )
 
-func dataSourceLinodeInstance() *schema.Resource {
+func dataSourceLinodeInstancesInstance() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"image": {
@@ -346,7 +346,7 @@ func dataSourceLinodeInstance() *schema.Resource {
 	}
 }
 
-func dataSourceLinodeInstanceFilter() *schema.Resource {
+func dataSourceLinodeInstancesFilter() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -371,12 +371,12 @@ func dataSourceLinodeInstances() *schema.Resource {
 			"filter": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Elem:     dataSourceLinodeInstanceFilter(),
+				Elem:     dataSourceLinodeInstancesFilter(),
 			},
 			"linode": {
 				Type:     schema.TypeList,
 				Computed: true,
-				Elem:     dataSourceLinodeInstance(),
+				Elem:     dataSourceLinodeInstancesInstance(),
 			},
 		},
 	}
