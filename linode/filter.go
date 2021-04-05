@@ -10,6 +10,30 @@ import (
 // and returns the value converted to the correct filter type.
 type filterTypeFunc func(filterName string, value string) (interface{}, error)
 
+// filterSchema should be referenced in a schema configuration in order to
+// enable filter functionality
+func filterSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem:     &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"name": {
+					Type:        schema.TypeString,
+					Description: "The name of the attribute to filter on.",
+					Required:    true,
+				},
+				"values": {
+					Type:        schema.TypeList,
+					Elem:        &schema.Schema{Type: schema.TypeString},
+					Description: "The value(s) to be used in the filter.",
+					Required:    true,
+				},
+			},
+		},
+	}
+}
+
 // constructFilterString constructs a Linode filter JSON string from each filter element in the schema
 func constructFilterString(d *schema.ResourceData, typeFunc filterTypeFunc) (string, error) {
 	filters := d.Get("filter").([]interface{})

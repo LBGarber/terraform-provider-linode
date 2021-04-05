@@ -345,33 +345,11 @@ func dataSourceLinodeInstancesInstance() *schema.Resource {
 	}
 }
 
-func dataSourceLinodeInstancesFilter() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:        schema.TypeString,
-				Description: "The name of the attribute to filter on.",
-				Required:    true,
-			},
-			"values": {
-				Type:        schema.TypeList,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "The value(s) to be used in the filter.",
-				Required:    true,
-			},
-		},
-	}
-}
-
 func dataSourceLinodeInstances() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceLinodeInstancesRead,
 		Schema: map[string]*schema.Schema{
-			"filter": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem:     dataSourceLinodeInstancesFilter(),
-			},
+			"filter": filterSchema(),
 			"linode": {
 				Type:     schema.TypeList,
 				Computed: true,
