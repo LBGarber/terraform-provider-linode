@@ -189,6 +189,7 @@ func TestAccLinodeInstance_config(t *testing.T) {
 					resource.TestCheckResourceAttr(resName, "swap_size", "0"),
 					resource.TestCheckResourceAttr(resName, "alerts.0.cpu", "60"),
 					resource.TestCheckResourceAttr(resName, "config.0.helpers.0.network", "true"),
+
 					testAccCheckComputeInstanceConfigs(&instance, testConfig("config", testConfigKernel("linode/latest-64bit"))),
 				),
 			},
@@ -234,6 +235,48 @@ func TestAccLinodeInstance_configPair(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"boot_config_label"},
+			},
+		},
+	})
+}
+
+func TestAccLinodeInstance_configInterfaces(t *testing.T) {
+	t.Parallel()
+
+	resName := "linode_instance.foobar"
+	var instance linodego.Instance
+	instanceName := acctest.RandomWithPrefix("tf_test")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckLinodeInstanceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckLinodeInstanceWithConfigInterfaces(instanceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLinodeInstanceExists(resName, &instance),
+					resource.TestCheckResourceAttr(resName, "label", instanceName),
+					resource.TestCheckResourceAttr(resName, "type", "g6-nanode-1"),
+					resource.TestCheckResourceAttr(resName, "region", "us-southeast"),
+					resource.TestCheckResourceAttr(resName, "group", "tf_test"),
+
+					resource.TestCheckResourceAttr(resName, "config.0.interface.0.purpose", "public"),
+
+					resource.TestCheckResourceAttr(resName, "config.0.interface.1.purpose", "vlan"),
+					resource.TestCheckResourceAttr(resName, "config.0.interface.1.label", "tf-really-cool-vlan"),
+				),
+			},
+			{
+				Config: testAccCheckLinodeInstanceWithConfigInterfacesUpdate(instanceName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resName, "config.0.interface.0.purpose", "public"),
+				),
+			},
+			{
+				ResourceName:      resName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1927,6 +1970,65 @@ resource "linode_instance" "foobar" {
 	}
 
 	boot_config_label = "configa"
+}`, instance)
+}
+
+func testAccCheckLinodeInstanceWithConfigInterfaces(instance string) string {
+	return fmt.Sprintf(`
+resource "linode_instance" "foobar" {
+	label = "%s"
+	group = "tf_test"
+	type = "g6-nanode-1"
+	region = "us-southeast"
+	alerts {
+		cpu = 60
+	}
+	config {
+		label = "config"
+		kernel = "linode/latest-64bit"
+		root_device = "/dev/sda"
+		helpers {
+			network = true
+		}
+
+		interface {
+			purpose = "public"
+		}
+
+		interface {
+			purpose = "vlan"
+			label = "tf-really-cool-vlan"
+		}
+	}
+
+	boot_config_label = "config"
+}`, instance)
+}
+
+func testAccCheckLinodeInstanceWithConfigInterfacesUpdate(instance string) string {
+	return fmt.Sprintf(`
+resource "linode_instance" "foobar" {
+	label = "%s"
+	group = "tf_test"
+	type = "g6-nanode-1"
+	region = "us-southeast"
+	alerts {
+		cpu = 60
+	}
+	config {
+		label = "config"
+		kernel = "linode/latest-64bit"
+		root_device = "/dev/sda"
+		helpers {
+			network = true
+		}
+
+		interface {
+			purpose = "public"
+		}
+	}
+
+	boot_config_label = "config"
 }`, instance)
 }
 

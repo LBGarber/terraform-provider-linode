@@ -53,6 +53,28 @@ func resourceLinodeInstanceDeviceDisk() *schema.Resource {
 	}
 }
 
+func resourceLinodeInstanceConfigInterface() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"label": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The unique label of this interface.",
+			},
+			"purpose": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The purpose of this interface.",
+			},
+			"ipam_address": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The IPAM Address of this interface.",
+			},
+		},
+	}
+}
+
 func resourceLinodeInstance() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceLinodeInstanceCreate,
@@ -367,6 +389,13 @@ func resourceLinodeInstance() *schema.Resource {
 					},
 				},
 			},
+			"interface": {
+				Type:        schema.TypeList,
+				Description: "An array of Network Interfaces for this Linode to be created with.",
+				Optional:    true,
+				ForceNew:    true,
+				Elem:        resourceLinodeInstanceConfigInterface(),
+			},
 			"config": {
 				Optional:    true,
 				Description: "Configuration profiles define the VM settings and boot behavior of the Linode Instance.",
@@ -502,6 +531,13 @@ func resourceLinodeInstance() *schema.Resource {
 									},
 								},
 							},
+						},
+						"interface": {
+							Type:        schema.TypeList,
+							Description: "An array of Network Interfaces for this Linode’s Configuration Profile.",
+							Optional:    true,
+							Computed:    true,
+							Elem:        resourceLinodeInstanceConfigInterface(),
 						},
 						"kernel": {
 							Type:     schema.TypeString,
@@ -779,6 +815,14 @@ func resourceLinodeInstanceCreate(ctx context.Context, d *schema.ResourceData, m
 	if tagsRaw, tagsOk := d.GetOk("tags"); tagsOk {
 		for _, tag := range tagsRaw.(*schema.Set).List() {
 			createOpts.Tags = append(createOpts.Tags, tag.(string))
+		}
+	}
+
+	if interfaces, interfacesOk := d.GetOk("interface"); interfacesOk {
+		createOpts.Interfaces = []linodego.InstanceConfigInterface{}
+
+		for _, i := range interfaces.([]interface{}) {
+			createOpts.Interfaces = append(createOpts.Interfaces, expandLinodeConfigInterface(i.(map[string]interface{})))
 		}
 	}
 

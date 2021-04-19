@@ -25,13 +25,14 @@ func TestAccDataSourceLinodeInstances_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resName, "instances.0.type", "g6-nanode-1"),
 					resource.TestCheckResourceAttr(resName, "instances.0.tags.#", "2"),
 					resource.TestCheckResourceAttr(resName, "instances.0.image", "linode/ubuntu18.04"),
-					resource.TestCheckResourceAttr(resName, "instances.0.region", "us-east"),
+					resource.TestCheckResourceAttr(resName, "instances.0.region", "us-southeast"),
 					resource.TestCheckResourceAttr(resName, "instances.0.group", "tf_test"),
 					resource.TestCheckResourceAttr(resName, "instances.0.swap_size", "256"),
 					resource.TestCheckResourceAttr(resName, "instances.0.ipv4.#", "2"),
 					resource.TestCheckResourceAttrSet(resName, "instances.0.ipv6"),
 					resource.TestCheckResourceAttr(resName, "instances.0.disk.#", "2"),
 					resource.TestCheckResourceAttr(resName, "instances.0.config.#", "1"),
+					resource.TestCheckResourceAttr(resName, "instances.0.config.0.interface.0.purpose", "public"),
 				),
 			},
 		},
@@ -66,10 +67,14 @@ resource "linode_instance" "foobar" {
 	tags = ["cool", "cooler"]
 	type = "g6-nanode-1"
 	image = "linode/ubuntu18.04"
-	region = "us-east"
+	region = "us-southeast"
 	root_pass = "terraform-test"
 	swap_size = 256
 	private_ip = true
+
+	interface {
+		purpose = "public"
+	}
 }
 `, instance) + `
 data "linode_instances" "foobar" {
