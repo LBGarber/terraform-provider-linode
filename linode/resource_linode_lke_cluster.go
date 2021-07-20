@@ -150,9 +150,28 @@ func resourceLinodeLKEClusterRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("failed to get LKE cluster %d: %s", id, err)
 	}
 
+	poolsSpec := d.Get("pool").([]interface{})
+	poolsMatched := make([]linodego.LKEClusterPool, len(poolsSpec))
 	pools, err := client.ListLKEClusterPools(context.Background(), id, nil)
 	if err != nil {
 		return diag.Errorf("failed to get pools for LKE cluster %d: %s", id, err)
+	}
+	pMap := make(map[int]linodego.LKEClusterPool)
+	for _, p := range pools {
+		pMap[p.ID] = p
+	}
+
+	for i, p := range poolsSpec {
+		p := p.(map[string]interface{})
+
+		for k, v := range pMap {
+			if v.Type == p["type"] && v.Count == p["count"] {
+				poolsMatched[i] = v
+				delete(pMap, k)
+				break
+			}
+		}
+
 	}
 
 	kubeconfig, err := client.GetLKEClusterKubeconfig(context.Background(), id)
@@ -171,7 +190,7 @@ func resourceLinodeLKEClusterRead(ctx context.Context, d *schema.ResourceData, m
 	d.Set("tags", cluster.Tags)
 	d.Set("status", cluster.Status)
 	d.Set("kubeconfig", kubeconfig.KubeConfig)
-	d.Set("pool", flattenLinodeLKEClusterPools(pools))
+	d.Set("pool", flattenLinodeLKEClusterPools(poolsMatched))
 	d.Set("api_endpoints", flattenLinodeLKEClusterAPIEndpoints(endpoints))
 	return nil
 }
