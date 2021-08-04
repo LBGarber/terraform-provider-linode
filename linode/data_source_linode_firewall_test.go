@@ -19,7 +19,7 @@ func TestAccDataSourceLinodeFirewall_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: accTestWithProvider(testDataSourceLinodeFirewallBasic(firewallName, devicePrefix), map[string]interface{}{
+				Config: accTestWithProvider(testDataSourceLinodeFirewallBasic(t, firewallName, devicePrefix), map[string]interface{}{
 					providerKeySkipInstanceReadyPoll: true,
 				}),
 				Check: resource.ComposeTestCheckFunc(
@@ -57,10 +57,13 @@ func TestAccDataSourceLinodeFirewall_basic(t *testing.T) {
 	})
 }
 
-func testDataSourceLinodeFirewallBasic(firewallName, devicePrefix string) string {
-	return testAccCheckLinodeFirewallBasic(firewallName, devicePrefix) + `
-data "linode_firewall" "test" {
-	id = linode_firewall.test.id
-}
-`
+func testDataSourceLinodeFirewallBasic(t *testing.T, firewallName, devicePrefix string) string {
+	return testAccExecuteTemplate(t, "firewall_basic", map[string]interface{}{
+		"label": firewallName,
+		"inst1": map[string]interface{}{
+			"prefix": devicePrefix,
+			"name":   "one",
+			"pubKey": publicKeyMaterial,
+		},
+	})
 }

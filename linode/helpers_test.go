@@ -1,6 +1,7 @@
 package linode
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strconv"
@@ -106,4 +107,15 @@ func testAccCheckResourceNonEmptyList(resourceName, attrName string) resource.Te
 
 		return nil
 	}
+}
+
+func testAccExecuteTemplate(t *testing.T, templateName string, data interface{}) string {
+	var b bytes.Buffer
+
+	err := tfTemplates.ExecuteTemplate(&b, templateName, data)
+	if err != nil {
+		t.Fatalf("failed to execute template %s: %v", templateName, err)
+	}
+
+	return b.String()
 }
