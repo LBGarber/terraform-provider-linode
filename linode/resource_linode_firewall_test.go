@@ -3,13 +3,12 @@ package linode
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/linode/linodego"
 	"strconv"
 	"testing"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 const testFirewallResName = "linode_firewall.test"
@@ -55,7 +54,7 @@ func TestAccLinodeFirewall_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: accTestWithProvider(testAccCheckLinodeFirewallBasic(name, devicePrefix), map[string]interface{}{
+				Config: accTestWithProvider(testAccCheckLinodeFirewallBasic(t, name, devicePrefix), map[string]interface{}{
 					providerKeySkipInstanceReadyPoll: true,
 				}),
 				Check: resource.ComposeTestCheckFunc(
@@ -109,7 +108,7 @@ func TestAccLinodeFirewall_minimum(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: accTestWithProvider(testAccCheckLinodeFirewallMinimum(name), map[string]interface{}{
+				Config: accTestWithProvider(testAccCheckLinodeFirewallMinimum(t, name), map[string]interface{}{
 					providerKeySkipInstanceReadyPoll: true,
 				}),
 				Check: resource.ComposeTestCheckFunc(
@@ -149,7 +148,7 @@ func TestAccLinodeFirewall_multipleRules(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: accTestWithProvider(testAccCheckLinodeFirewallMultipleRules(name, devicePrefix), map[string]interface{}{
+				Config: accTestWithProvider(testAccCheckLinodeFirewallMultipleRules(t, name, devicePrefix), map[string]interface{}{
 					providerKeySkipInstanceReadyPoll: true,
 				}),
 				Check: resource.ComposeTestCheckFunc(
@@ -222,7 +221,7 @@ func TestAccLinodeFirewall_no_device(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeFirewallNoDevice(name),
+				Config: testAccCheckLinodeFirewallNoDevice(t, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testFirewallResName, "label", name),
 					resource.TestCheckResourceAttr(testFirewallResName, "disabled", "false"),
@@ -262,7 +261,7 @@ func TestAccLinodeFirewall_updates(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: accTestWithProvider(testAccCheckLinodeFirewallBasic(name, devicePrefix), map[string]interface{}{
+				Config: accTestWithProvider(testAccCheckLinodeFirewallBasic(t, name, devicePrefix), map[string]interface{}{
 					providerKeySkipInstanceReadyPoll: true,
 				}),
 				Check: resource.ComposeTestCheckFunc(
@@ -294,7 +293,7 @@ func TestAccLinodeFirewall_updates(t *testing.T) {
 				),
 			},
 			{
-				Config: accTestWithProvider(testAccCheckLinodeFirewallUpdates(newName, devicePrefix), map[string]interface{}{
+				Config: accTestWithProvider(testAccCheckLinodeFirewallUpdates(t, newName, devicePrefix), map[string]interface{}{
 					providerKeySkipInstanceReadyPoll: true,
 				}),
 				Check: resource.ComposeTestCheckFunc(
@@ -348,7 +347,7 @@ func TestAccLinodeFirewall_externalDelete(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: accTestWithProvider(testAccCheckLinodeFirewallBasic(name, devicePrefix), map[string]interface{}{
+				Config: accTestWithProvider(testAccCheckLinodeFirewallBasic(t, name, devicePrefix), map[string]interface{}{
 					providerKeySkipInstanceReadyPoll: true,
 				}),
 				Check: resource.ComposeTestCheckFunc(
@@ -389,7 +388,7 @@ func TestAccLinodeFirewall_externalDelete(t *testing.T) {
 						t.Fatalf("failed to delete firewall: %s", err)
 					}
 				},
-				Config: accTestWithProvider(testAccCheckLinodeFirewallBasic(name, devicePrefix), map[string]interface{}{
+				Config: accTestWithProvider(testAccCheckLinodeFirewallBasic(t, name, devicePrefix), map[string]interface{}{
 					providerKeySkipInstanceReadyPoll: true,
 				}),
 				Check: resource.ComposeTestCheckFunc(
@@ -454,184 +453,44 @@ func testAccCheckLinodeFirewallExists(name string, firewall *linodego.Firewall) 
 	}
 }
 
-func testAccCheckLinodeFirewallInstance(prefix, identifier string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "%[1]s" {
-	label = "%.15[2]s-%[1]s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "ca-central"
-	disk {
-		label = "disk"
-		image = "linode/alpine3.11"
-		root_pass = "b4d_p4s5"
-		authorized_keys = ["%[3]s"]
-		size = 3000
-	}
-}`, identifier, prefix, publicKeyMaterial)
+type FirewallTemplateData struct {
+	Label        string
+	DevicePrefix string
+	PubKey       string
 }
 
-func testAccCheckLinodeFirewallBasic(name, devicePrefix string) string {
-	return testAccCheckLinodeFirewallInstance(devicePrefix, "one") + fmt.Sprintf(`
-resource "linode_firewall" "test" {
-	label = "%s"
-	tags  = ["test"]
-
-	inbound {
-		label    = "tf-test-in"
-		action = "ACCEPT"
-		protocol  = "TCP"
-		ports     = "80"
-		ipv4 = ["0.0.0.0/0"]
-		ipv6 = ["::/0"]
-	}
-	inbound_policy = "DROP"
-
-	outbound {
-		label    = "tf-test-out"
-		action = "ACCEPT"
-		protocol  = "TCP"
-		ports     = "80"
-		ipv4 = ["0.0.0.0/0"]
-		ipv6 = ["2001:db8::/32"]
-	}
-	outbound_policy = "DROP"
-
-	linodes = [linode_instance.one.id]
-}`, name)
+func testAccCheckLinodeFirewallBasic(t *testing.T, name, devicePrefix string) string {
+	return testAccExecuteTemplate(t, "firewall_basic", FirewallTemplateData{
+		Label:        name,
+		DevicePrefix: devicePrefix,
+		PubKey:       publicKeyMaterial,
+	})
 }
 
-func testAccCheckLinodeFirewallMinimum(name string) string {
-	return fmt.Sprintf(`
-resource "linode_firewall" "test" {
-	label = "%s"
-	tags  = ["test"]
-
-	inbound {
-		label    = "tf-test-in"
-		action = "ACCEPT"
-		protocol = "tcp"
-		ipv4 = ["0.0.0.0/0"]
-	}
-	inbound_policy = "DROP"
-	outbound_policy = "DROP"
-}`, name)
+func testAccCheckLinodeFirewallMinimum(t *testing.T, name string) string {
+	return testAccExecuteTemplate(t, "firewall_minimum", FirewallTemplateData{
+		Label: name,
+	})
 }
 
-func testAccCheckLinodeFirewallMultipleRules(name, devicePrefix string) string {
-	return testAccCheckLinodeFirewallInstance(devicePrefix, "one") + fmt.Sprintf(`
-resource "linode_firewall" "test" {
-	label = "%s"
-	tags  = ["test"]
-
-	inbound {
-		label    = "tf-test-in"
-		action = "ACCEPT"
-		protocol  = "TCP"
-		ports     = "80"
-		ipv4 = ["0.0.0.0/0"]
-		ipv6 = ["::/0"]
-	}
-
-	inbound {
-		label    = "tf-test-in-1"
-		action = "ACCEPT"
-		protocol  = "TCP"
-		ports     = "443"
-		ipv4 = ["0.0.0.0/0"]
-		ipv6 = ["::/0"]
-	}
-	inbound_policy = "DROP"
-
-	outbound {
-		label    = "tf-test-out"
-		action = "ACCEPT"
-		protocol  = "TCP"
-		ports     = "80"
-		ipv4 = ["0.0.0.0/0"]
-		ipv6 = ["2001:db8::/32"]
-	}
-
-	outbound {
-		label    = "tf-test-out-1"
-		action = "ACCEPT"
-		protocol  = "TCP"
-		ports     = "443"
-		ipv4 = ["0.0.0.0/0"]
-		ipv6 = ["2001:db8::/32"]
-	}
-	outbound_policy = "DROP"
-
-	linodes = [linode_instance.one.id]
-}`, name)
+func testAccCheckLinodeFirewallMultipleRules(t *testing.T, name, devicePrefix string) string {
+	return testAccExecuteTemplate(t, "firewall_multiple_rules", FirewallTemplateData{
+		Label:        name,
+		DevicePrefix: devicePrefix,
+		PubKey:       publicKeyMaterial,
+	})
 }
 
-func testAccCheckLinodeFirewallNoDevice(name string) string {
-	return fmt.Sprintf(`
-resource "linode_firewall" "test" {
-	label = "%s"
-	tags  = ["test"]
-
-	inbound {
-		label    = "tf-test-in"
-		action   = "ACCEPT"
-		protocol = "TCP"
-		ports    = "80"
-		ipv6     = ["::/0"]
-	}
-
-	inbound_policy = "DROP"
-	outbound {
-		label    = "tf-test-out"
-		action   = "ACCEPT"
-		protocol = "TCP"
-		ports    = "80"
-		ipv6     = ["::/0"]
-	}
-	outbound_policy = "DROP"
-
-	linodes = []
-}`, name)
+func testAccCheckLinodeFirewallNoDevice(t *testing.T, name string) string {
+	return testAccExecuteTemplate(t, "firewall_nodevice", FirewallTemplateData{
+		Label: name,
+	})
 }
 
-func testAccCheckLinodeFirewallUpdates(name, devicePrefix string) string {
-	return testAccCheckLinodeFirewallInstance(devicePrefix, "one") +
-		testAccCheckLinodeFirewallInstance(devicePrefix, "two") +
-		fmt.Sprintf(`
-resource "linode_firewall" "test" {
-	label    = "%s"
-	tags     = ["test", "test2"]
-    disabled = true
-
-	inbound {
-		label    = "tf-test-in"
-		action   = "DROP"
-		protocol = "TCP"
-		ports    = "80"
-		ipv4     = ["0.0.0.0/0"]
-		ipv6     = ["::/0", "ff00::/8"]
-	}
-
-	inbound {
-		label    = "tf-test-in2"
-		action   = "DROP"
-		protocol = "TCP"
-		ports    = "443"
-		ipv4     = ["0.0.0.0/0", "127.0.0.1/32"]
-	}
-
-	inbound {
-		label    = "tf-test-in3"
-		action   = "DROP"
-		protocol = "TCP"
-		ports    = "22"
-		ipv4     = ["0.0.0.0/0"]
-	}
-	inbound_policy = "ACCEPT"
-	outbound_policy = "ACCEPT"
-
-	linodes = [
-		linode_instance.two.id,
-	]
-}`, name)
+func testAccCheckLinodeFirewallUpdates(t *testing.T, name, devicePrefix string) string {
+	return testAccExecuteTemplate(t, "firewall_updates", FirewallTemplateData{
+		Label:        name,
+		DevicePrefix: devicePrefix,
+		PubKey:       publicKeyMaterial,
+	})
 }

@@ -56,7 +56,7 @@ func TestAccLinodeToken_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeTokenDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeTokenConfigBasic(tokenName),
+				Config: testAccCheckLinodeTokenConfigBasic(t, tokenName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeTokenExists,
 					resource.TestCheckResourceAttr(resName, "label", tokenName),
@@ -72,7 +72,7 @@ func TestAccLinodeToken_basic(t *testing.T) {
 				ImportStateVerifyIgnore: []string{"token"},
 			},
 			{
-				Config: testAccCheckLinodeTokenConfigUpdates(tokenName),
+				Config: testAccCheckLinodeTokenConfigUpdates(t, tokenName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeTokenExists,
 					resource.TestCheckResourceAttr(resName, "label", fmt.Sprintf("%s_renamed", tokenName)),
@@ -134,20 +134,16 @@ func testAccCheckLinodeTokenDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckLinodeTokenConfigBasic(token string) string {
-	return fmt.Sprintf(`
-	resource "linode_token" "foobar" {
-		label = "%s"
-		scopes = "linodes:read_only"
-		expiry = "2100-01-02T03:04:05Z"
-	}`, token)
+type TokenTemplateData struct {
+	Label string
 }
 
-func testAccCheckLinodeTokenConfigUpdates(token string) string {
-	return fmt.Sprintf(`
-	resource "linode_token" "foobar" {
-		label = "%s_renamed"
-		scopes = "linodes:read_only"
-		expiry = "2100-01-02T03:04:05Z"
-	}`, token)
+func testAccCheckLinodeTokenConfigBasic(t *testing.T, token string) string {
+	return testAccExecuteTemplate(t, "token_basic",
+		TokenTemplateData{Label: token})
+}
+
+func testAccCheckLinodeTokenConfigUpdates(t *testing.T, token string) string {
+	return testAccExecuteTemplate(t, "token_updates",
+		TokenTemplateData{Label: token})
 }

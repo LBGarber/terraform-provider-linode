@@ -1,0 +1,15 @@
+{{ define "volume_basic" }}
+resource "linode_volume" "foobar" {
+    label = "{{.Label}}"
+    region = "us-west"
+    tags = ["tf_test"]
+}
+{{ end }}
+
+{{ define "volume_updates" }}
+resource "linode_volume" "foobar" {
+    label = "{{.Label}}_r"
+    region = "us-west"
+    tags = ["tf_test", "tf_test_2"]
+}
+{{ end }}

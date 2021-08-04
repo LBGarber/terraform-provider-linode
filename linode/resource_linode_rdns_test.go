@@ -56,7 +56,7 @@ func TestAccLinodeRDNS_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeRDNSDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeRDNSBasic(linodeLabel),
+				Config: testAccCheckLinodeRDNSBasic(t, linodeLabel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeRDNSExists,
 					resource.TestMatchResourceAttr(resName, "rdns", regexp.MustCompile(`.nip.io$`)),
@@ -83,7 +83,7 @@ func TestAccLinodeRDNS_update(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeRDNSDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeRDNSBasic(label),
+				Config: testAccCheckLinodeRDNSBasic(t, label),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeRDNSExists,
 					resource.TestCheckResourceAttrPair(resName, "address", "linode_instance.foobar", "ip_address"),
@@ -91,17 +91,17 @@ func TestAccLinodeRDNS_update(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeRDNSChanged(label),
+				Config: testAccCheckLinodeRDNSChanged(t, label),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeRDNSExists,
 					resource.TestMatchResourceAttr(resName, "rdns", regexp.MustCompile(`([0-9]{1,3}\-){3}[0-9]{1,3}.nip.io$`)),
 				),
 			},
 			{
-				Config: testAccCheckLinodeRDNSDeleted(label),
+				Config: testAccCheckLinodeRDNSDeleted(t, label),
 			},
 			{
-				Config: testAccCheckLinodeRDNSDeleted(label),
+				Config: testAccCheckLinodeRDNSDeleted(t, label),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("data.linode_networking_ip.foobar", "rdns", regexp.MustCompile(`.members.linode.com$`)),
 				),
@@ -154,51 +154,27 @@ func testAccCheckLinodeRDNSDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckLinodeRDNSBasic(label string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	image = "linode/alpine3.12"
-	type = "g6-standard-1"
-	region = "us-east"
+type RDNSTemplateData struct {
+	Label string
 }
 
-resource "linode_rdns" "foobar" {
-	address = "${linode_instance.foobar.ip_address}"
-	rdns = "${linode_instance.foobar.ip_address}.nip.io"
-}`, label)
+func testAccCheckLinodeRDNSBasic(t *testing.T, label string) string {
+	return testAccExecuteTemplate(t, "rdns_basic",
+		RDNSTemplateData{
+			Label: label,
+		})
 }
 
-func testAccCheckLinodeRDNSChanged(label string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	image = "linode/alpine3.12"
-	type = "g6-standard-1"
-	region = "us-east"
+func testAccCheckLinodeRDNSChanged(t *testing.T, label string) string {
+	return testAccExecuteTemplate(t, "rdns_changed",
+		RDNSTemplateData{
+			Label: label,
+		})
 }
 
-resource "linode_rdns" "foobar" {
-	rdns    = "${replace(linode_instance.foobar.ip_address, ".", "-")}.nip.io"
-	address = "${linode_instance.foobar.ip_address}"
-}
-`, label)
-}
-
-func testAccCheckLinodeRDNSDeleted(label string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	image = "linode/alpine3.12"
-	type = "g6-standard-1"
-	region = "us-east"
-}
-
-data "linode_networking_ip" "foobar" {
-	address = "${linode_instance.foobar.ip_address}"
-}
-`, label)
+func testAccCheckLinodeRDNSDeleted(t *testing.T, label string) string {
+	return testAccExecuteTemplate(t, "rdns_deleted",
+		RDNSTemplateData{
+			Label: label,
+		})
 }

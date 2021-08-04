@@ -1,0 +1,13 @@
+{{ define "instance_ip_no_boot" }}
+resource "linode_instance" "{{.Label}}" {
+    label = "{{.Label}}"
+    group = "tf_test"
+    type = "g6-nanode-1"
+    region = "us-east"
+}
+
+resource "linode_instance_ip" "test" {
+    linode_id = linode_instance.{{.Label}}.id
+    public = true
+}
+{{ end }}

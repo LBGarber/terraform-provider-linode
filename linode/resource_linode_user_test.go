@@ -45,7 +45,7 @@ func TestAccLinodeUser_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeUserDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeUserConfigBasic(username, email, true),
+				Config: testAccCheckLinodeUserConfigBasic(t, username, email, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testUserResName, "email", email),
 					resource.TestCheckResourceAttr(testUserResName, "username", username),
@@ -70,7 +70,7 @@ func TestAccLinodeUser_updates(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeUserDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeUserConfigBasic(username, email, false),
+				Config: testAccCheckLinodeUserConfigBasic(t, username, email, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testUserResName, "email", email),
 					resource.TestCheckResourceAttr(testUserResName, "username", username),
@@ -80,7 +80,7 @@ func TestAccLinodeUser_updates(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeUserConfigBasic(updatedUsername, email, true),
+				Config: testAccCheckLinodeUserConfigBasic(t, updatedUsername, email, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testUserResName, "email", email),
 					resource.TestCheckResourceAttr(testUserResName, "username", updatedUsername),
@@ -106,7 +106,7 @@ func TestAccLinodeUser_grants(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeUserDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeUserConfigGrants(username, email),
+				Config: testAccCheckLinodeUserConfigGrants(t, username, email),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testUserResName, "global_grants.0.account_access", ""),
 					resource.TestCheckResourceAttr(testUserResName, "global_grants.0.add_domains", "true"),
@@ -123,7 +123,7 @@ func TestAccLinodeUser_grants(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeUserConfigGrantsUpdate(username, email, instance),
+				Config: testAccCheckLinodeUserConfigGrantsUpdate(t, username, email, instance),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testUserResName, "global_grants.0.account_access", "read_only"),
 					resource.TestCheckResourceAttr(testUserResName, "global_grants.0.add_domains", "false"),
@@ -144,47 +144,35 @@ func TestAccLinodeUser_grants(t *testing.T) {
 	})
 }
 
-func testAccCheckLinodeUserConfigBasic(username, email string, restricted bool) string {
-	return fmt.Sprintf(`
-resource "linode_user" "test" {
-	username = "%s"
-	email = "%s"
-	restricted = %t
-}`, username, email, restricted)
+type UserTemplateData struct {
+	Username   string
+	Email      string
+	Restricted bool
+	Instance   InstanceTemplateData
 }
 
-func testAccCheckLinodeUserConfigGrants(username, email string) string {
-	return fmt.Sprintf(`
-resource "linode_user" "test" {
-	username = "%s"
-	email = "%s"
-	restricted = true
-
-	global_grants {
-		add_linodes = true
-		add_nodebalancers = true
-		add_domains = true
-		add_firewalls = true
-	}
-}`, username, email)
+func testAccCheckLinodeUserConfigBasic(t *testing.T, username, email string, restricted bool) string {
+	return testAccExecuteTemplate(t, "user_basic",
+		UserTemplateData{
+			Username:   username,
+			Email:      email,
+			Restricted: restricted,
+		})
 }
 
-func testAccCheckLinodeUserConfigGrantsUpdate(username, email, instance string) string {
-	return testAccCheckLinodeInstanceWithNoImage(instance) + fmt.Sprintf(`
-resource "linode_user" "test" {
-	username = "%s"
-	email = "%s"
-	restricted = true
+func testAccCheckLinodeUserConfigGrants(t *testing.T, username, email string) string {
+	return testAccExecuteTemplate(t, "user_grants",
+		UserTemplateData{
+			Username: username,
+			Email:    email,
+		})
+}
 
-	global_grants {
-		account_access = "read_only"
-		add_linodes = true
-		add_images = true
-	}
-
-	linode_grant {
-		id = linode_instance.foobar.id
-		permissions = "read_write"
-	}
-}`, username, email)
+func testAccCheckLinodeUserConfigGrantsUpdate(t *testing.T, username, email, instance string) string {
+	return testAccExecuteTemplate(t, "user_grants_updates",
+		UserTemplateData{
+			Username: username,
+			Email:    email,
+			Instance: InstanceTemplateData{Label: instance},
+		})
 }

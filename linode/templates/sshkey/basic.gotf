@@ -1,0 +1,13 @@
+{{ define "sshkey_basic" }}
+resource "linode_sshkey" "foobar" {
+    label = "{{.Label}}"
+    ssh_key = "{{.Key}}"
+}
+{{ end }}
+
+{{ define "sshkey_updates" }}
+resource "linode_sshkey" "foobar" {
+    label = "{{.Label}}_renamed"
+    ssh_key = "{{.Key}}"
+}
+{{ end }}

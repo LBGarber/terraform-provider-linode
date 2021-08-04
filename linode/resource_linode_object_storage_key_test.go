@@ -56,7 +56,7 @@ func TestAccLinodeObjectStorageKey_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeObjectStorageKeyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeObjectStorageKeyConfigBasic(objectStorageKeyLabel),
+				Config: testAccCheckLinodeObjectStorageKeyConfigBasic(t, objectStorageKeyLabel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeObjectStorageKeyExists,
 					testAccCheckLinodeObjectStorageKeySecretKeyAccessible,
@@ -82,7 +82,7 @@ func TestAccLinodeObjectStorageKey_limited(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeObjectStorageKeyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeObjectStorageKeyConfigLimited(objectStorageKeyLabel),
+				Config: testAccCheckLinodeObjectStorageKeyConfigLimited(t, objectStorageKeyLabel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeObjectStorageKeyExists,
 					testAccCheckLinodeObjectStorageKeySecretKeyAccessible,
@@ -114,7 +114,7 @@ func TestAccLinodeObjectStorageKey_update(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeObjectStorageKeyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeObjectStorageKeyConfigBasic(objectStorageKeyLabel),
+				Config: testAccCheckLinodeObjectStorageKeyConfigBasic(t, objectStorageKeyLabel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeObjectStorageKeyExists,
 					testAccCheckLinodeObjectStorageKeySecretKeyAccessible,
@@ -123,7 +123,7 @@ func TestAccLinodeObjectStorageKey_update(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeObjectStorageKeyConfigUpdates(objectStorageKeyLabel),
+				Config: testAccCheckLinodeObjectStorageKeyConfigUpdates(t, objectStorageKeyLabel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeObjectStorageKeyExists,
 					testAccCheckLinodeObjectStorageKeySecretKeyAccessible, // should be preserved in state
@@ -208,37 +208,21 @@ func testAccCheckLinodeObjectStorageKeyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckLinodeObjectStorageKeyConfigBasic(label string) string {
-	return fmt.Sprintf(`
-resource "linode_object_storage_key" "foobar" {
-	label = "%s"
-}`, label)
+type ObjectStorageKeyTemplateData struct {
+	Label string
 }
 
-func testAccCheckLinodeObjectStorageKeyConfigUpdates(label string) string {
-	return fmt.Sprintf(`
-resource "linode_object_storage_key" "foobar" {
-	label = "%s_renamed"
-}`, label)
+func testAccCheckLinodeObjectStorageKeyConfigBasic(t *testing.T, label string) string {
+	return testAccExecuteTemplate(t, "object_storage_key_basic",
+		ObjectStorageKeyTemplateData{Label: label})
 }
 
-func testAccCheckLinodeObjectStorageKeyConfigLimited(label string) string {
-	return fmt.Sprintf(`
-resource "linode_object_storage_bucket" "foobar" {
-	cluster = "us-east-1"
-	label = "%s-bucket"
+func testAccCheckLinodeObjectStorageKeyConfigUpdates(t *testing.T, label string) string {
+	return testAccExecuteTemplate(t, "object_storage_key_updates",
+		ObjectStorageKeyTemplateData{Label: label})
 }
-resource "linode_object_storage_key" "foobar" {
-	label = "%s_key"
-    bucket_access {
-        bucket_name = "%s-bucket"
-        cluster = "us-east-1"
-        permissions = "read_only"
-    }
-    bucket_access {
-        bucket_name = linode_object_storage_bucket.foobar.label
-        cluster = linode_object_storage_bucket.foobar.cluster
-        permissions = "read_write"
-    }
-}`, label, label, label)
+
+func testAccCheckLinodeObjectStorageKeyConfigLimited(t *testing.T, label string) string {
+	return testAccExecuteTemplate(t, "object_storage_key_limited",
+		ObjectStorageKeyTemplateData{Label: label})
 }

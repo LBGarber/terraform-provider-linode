@@ -83,7 +83,7 @@ func TestAccLinodeObjectStorageObject_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeObjectStorageKeyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeObjectStorageObjectConfigBasic(bucketName, keyName, content),
+				Config: testAccCheckLinodeObjectStorageObjectConfigBasic(t, bucketName, keyName, content),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeObjectStorageObjectExists(&object),
 					testAccCheckLinodeObjectStorageObjectBody(&object, content),
@@ -110,7 +110,7 @@ func TestAccLinodeObjectStorageObject_base64(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeObjectStorageKeyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeObjectStorageObjectConfigBase64Encoded(bucketName, keyName, base64EncodedContent),
+				Config: testAccCheckLinodeObjectStorageObjectConfigBase64Encoded(t, bucketName, keyName, base64EncodedContent),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeObjectStorageObjectExists(&object),
 					testAccCheckLinodeObjectStorageObjectBody(&object, content),
@@ -146,7 +146,7 @@ func TestAccLinodeObjectStorageObject_source(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeObjectStorageKeyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeObjectStorageObjectConfigSource(bucketName, keyName, file.Name()),
+				Config: testAccCheckLinodeObjectStorageObjectConfigSource(t, bucketName, keyName, file.Name()),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeObjectStorageObjectExists(&object),
 					testAccCheckLinodeObjectStorageObjectBody(&object, content),
@@ -172,7 +172,7 @@ func TestAccLinodeObjectStorageObject_contentUpdate(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeObjectStorageKeyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeObjectStorageObjectConfigBasic(bucketName, keyName, content),
+				Config: testAccCheckLinodeObjectStorageObjectConfigBasic(t, bucketName, keyName, content),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeObjectStorageObjectExists(&object),
 					testAccCheckLinodeObjectStorageObjectBody(&object, content),
@@ -182,7 +182,7 @@ func TestAccLinodeObjectStorageObject_contentUpdate(t *testing.T) {
 				PreConfig: func() {
 					content = "updated456"
 				},
-				Config: testAccCheckLinodeObjectStorageObjectConfigBasic(bucketName, keyName, content),
+				Config: testAccCheckLinodeObjectStorageObjectConfigBasic(t, bucketName, keyName, content),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeObjectStorageObjectExists(&object),
 					testAccCheckLinodeObjectStorageObjectBody(&object, content),
@@ -207,7 +207,7 @@ func TestAccLinodeObjectStorageObject_updates(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeObjectStorageKeyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeObjectStorageObjectConfigBasic(bucketName, keyName, content),
+				Config: testAccCheckLinodeObjectStorageObjectConfigBasic(t, bucketName, keyName, content),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeObjectStorageObjectExists(&object),
 					testAccCheckLinodeObjectStorageObjectBody(&object, content),
@@ -218,7 +218,7 @@ func TestAccLinodeObjectStorageObject_updates(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeObjectStorageObjectConfigUpdates(bucketName, keyName, content),
+				Config: testAccCheckLinodeObjectStorageObjectConfigUpdates(t, bucketName, keyName, content),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeObjectStorageObjectExists(&object),
 					testAccCheckLinodeObjectStorageObjectBody(&object, content),
@@ -240,65 +240,61 @@ func TestAccLinodeObjectStorageObject_updates(t *testing.T) {
 	})
 }
 
-func testAccCheckLinodeObjectStorageObjectConfigBasic(name, keyName, content string) string {
-	return testAccCheckLinodeObjectStorageBucketConfigBasic(name) + testAccCheckLinodeObjectStorageKeyConfigBasic(keyName) + fmt.Sprintf(`
-resource "linode_object_storage_object" "object" {
-	bucket     = linode_object_storage_bucket.foobar.label
-	cluster    = "us-east-1"
-	access_key = linode_object_storage_key.foobar.access_key
-	secret_key = linode_object_storage_key.foobar.secret_key
-	key        = "test"
-	content    = "%s"
-}`, content)
+type ObjectStorageObjectTemplateData struct {
+	Content string
+	Source  string
+	Bucket  ObjectStorageBucketTemplateData
+	Key     ObjectStorageKeyTemplateData
 }
 
-func testAccCheckLinodeObjectStorageObjectConfigBase64Encoded(name, keyName, content string) string {
-	return testAccCheckLinodeObjectStorageBucketConfigBasic(name) + testAccCheckLinodeObjectStorageKeyConfigBasic(keyName) + fmt.Sprintf(`
-resource "linode_object_storage_object" "object" {
-	bucket         = linode_object_storage_bucket.foobar.label
-	cluster        = "us-east-1"
-	access_key     = linode_object_storage_key.foobar.access_key
-	secret_key     = linode_object_storage_key.foobar.secret_key
-	key            = "test"
-	content_base64 = "%s"
-}`, content)
+func testAccCheckLinodeObjectStorageObjectConfigBasic(t *testing.T, name, keyName, content string) string {
+	return testAccExecuteTemplate(t, "object_storage_object_basic",
+		ObjectStorageObjectTemplateData{
+			Content: content,
+			Bucket: ObjectStorageBucketTemplateData{
+				Label: name,
+			},
+			Key: ObjectStorageKeyTemplateData{
+				Label: keyName,
+			},
+		})
 }
 
-func testAccCheckLinodeObjectStorageObjectConfigSource(name, keyName, filePath string) string {
-	return testAccCheckLinodeObjectStorageBucketConfigBasic(name) + testAccCheckLinodeObjectStorageKeyConfigBasic(keyName) + fmt.Sprintf(`
-resource "linode_object_storage_object" "object" {
-	bucket     = linode_object_storage_bucket.foobar.label
-	cluster    = "us-east-1"
-	access_key = linode_object_storage_key.foobar.access_key
-	secret_key = linode_object_storage_key.foobar.secret_key
-	key        = "test"
-	source     = "%s"
-}`, filePath)
+func testAccCheckLinodeObjectStorageObjectConfigBase64Encoded(t *testing.T, name, keyName, content string) string {
+	return testAccExecuteTemplate(t, "object_storage_object_base64",
+		ObjectStorageObjectTemplateData{
+			Content: content,
+			Bucket: ObjectStorageBucketTemplateData{
+				Label: name,
+			},
+			Key: ObjectStorageKeyTemplateData{
+				Label: keyName,
+			},
+		})
 }
 
-func testAccCheckLinodeObjectStorageObjectConfigUpdates(name, keyName, content string) string {
-	return testAccCheckLinodeObjectStorageBucketConfigBasic(name) + testAccCheckLinodeObjectStorageKeyConfigBasic(keyName) + fmt.Sprintf(`
-	resource "linode_object_storage_object" "object" {
-		bucket     = linode_object_storage_bucket.foobar.label
-		cluster    = "us-east-1"
-		access_key = linode_object_storage_key.foobar.access_key
-		secret_key = linode_object_storage_key.foobar.secret_key
-		key        = "test"
-		content    = "%s"
-		acl        = "public-read"
+func testAccCheckLinodeObjectStorageObjectConfigSource(t *testing.T, name, keyName, filePath string) string {
+	return testAccExecuteTemplate(t, "object_storage_object_source",
+		ObjectStorageObjectTemplateData{
+			Source: filePath,
+			Bucket: ObjectStorageBucketTemplateData{
+				Label: name,
+			},
+			Key: ObjectStorageKeyTemplateData{
+				Label: keyName,
+			},
+		})
+}
 
-		content_type     = "text/plain"
-		content_encoding = "utf8"
-		content_language = "en"
-		website_redirect = "test.com"
-		force_destroy    = true
-
-		content_disposition = "attachment"
-		cache_control       = "max-age=2592000"
-
-		metadata = {
-			foo = "bar"
-			bar = "foo"
-		}
-	}`, content)
+func testAccCheckLinodeObjectStorageObjectConfigUpdates(t *testing.T, name, keyName, content string) string {
+	return testAccExecuteTemplate(t, "object_storage_object_updates",
+		ObjectStorageObjectTemplateData{
+			Content: content,
+			Bucket: ObjectStorageBucketTemplateData{
+				Label: name,
+			},
+			Key: ObjectStorageKeyTemplateData{
+				Label: keyName,
+			},
+		})
 }

@@ -1,0 +1,139 @@
+{{ define "instance_basic" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    group = "tf_test"
+    type = "g6-nanode-1"
+    image = "linode/ubuntu18.04"
+    region = "us-east"
+    root_pass = "terraform-test"
+    swap_size = 256
+    {{if .PubKey}}authorized_keys = ["{{.PubKey}}"]{{end}}
+}
+{{ end }}
+
+
+{{ define "instance_bootimage" }}
+resource "linode_instance" "{{.Label}}" {
+    label     = "{{.Label}}"
+    region    = "ca-central"
+    image     = "linode/alpine3.12"
+    type      = "g6-nanode-1"
+    root_pass = "terraform-test"
+}
+{{ end }}
+
+
+{{ define "instance_watchdog_disabled" }}
+resource "linode_instance" "foobar" {
+    label     = "{{.Label}}"
+    region    = "ca-central"
+    image     = "linode/alpine3.12"
+    type      = "g6-nanode-1"
+    root_pass = "terraform-test"
+
+    watchdog_enabled = false
+}
+{{ end }}
+
+{{ define "instance_type"}}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    group = "tf_test"
+    type = "{{.Type}}"
+    image = "linode/ubuntu18.04"
+    region = "us-east"
+    root_pass = "terraform-test"
+    swap_size = 256
+    authorized_keys = ["{{.PubKey}}"]
+}
+{{ end }}
+
+{{ define "instance_swap" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    group = "tf_test"
+    type = "g6-nanode-1"
+    image = "linode/ubuntu18.04"
+    region = "us-east"
+    root_pass = "terraform-test"
+    swap_size = {{.SwapSize}}
+    authorized_keys = ["{{.PubKey}}"]
+}
+{{ end }}
+
+{{ define "instance_tag" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    tags = ["tf_test"]
+    type = "g6-nanode-1"
+    region = "us-east"
+    config {
+        label = "config"
+        kernel = "linode/latest-64bit"
+    }
+}
+{{ end }}
+
+{{ define "instance_tag_update" }}
+    resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    tags = ["tf_test", "tf_test_2"]
+    type = "g6-nanode-1"
+    region = "us-east"
+    config {
+        label = "config"
+        kernel = "linode/latest-64bit"
+    }
+}
+{{ end }}
+
+{{ define "instance_simple_updates" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}_r"
+    type = "g6-nanode-1"
+    region = "us-east"
+    group = "tf_test_r"
+
+    config {
+        label = "config"
+        kernel = "linode/latest-64bit"
+        root_device = "/dev/sda"
+    }
+
+    boot_config_label = "config"
+}
+{{ end }}
+
+{{ define "instance_private_networking" }}
+resource "linode_instance" "foobar" {
+label = "{{.Label}}"
+type = "g6-nanode-1"
+image = "linode/ubuntu18.04"
+region = "us-east"
+root_pass = "terraform-test"
+swap_size = 256
+private_ip = true
+authorized_keys = ["{{.PubKey}}"]
+group = "tf_test"
+}
+{{ end }}
+
+{{ define "instance_authorized_users" }}
+data "linode_profile" "profile" {}
+
+resource "linode_sshkey" "key" {
+    label = "tf_test_authorized_keys"
+    ssh_key = "{{.PubKey}}"
+}
+
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    group = "tf_test"
+    type = "g6-nanode-1"
+    image = "linode/ubuntu18.04"
+    region = "us-east"
+    root_pass = "terraform-test"
+    swap_size = 256
+    authorized_users = [ "${data.linode_profile.profile.username}" ]
+}
+{{ end }}

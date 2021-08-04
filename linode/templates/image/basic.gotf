@@ -1,0 +1,12 @@
+{{ define "image_basic" }}
+
+{{ template "image_instance" . }}
+
+resource "linode_image" "foobar" {
+    linode_id = "${linode_instance.foobar.id}"
+    disk_id = "${linode_instance.foobar.disk.0.id}"
+    label = "{{.Label}}"
+    description = "{{.Description}}"
+}
+
+{{ end }}

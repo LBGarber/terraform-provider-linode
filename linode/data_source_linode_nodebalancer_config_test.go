@@ -19,7 +19,7 @@ func TestAccDataSourceLinodeNodeBalancerConfig_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeNodeBalancerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testDataSourceLinodeNodeBalancerConfigBasic(nodebalancerName),
+				Config: testDataSourceLinodeNodeBalancerConfigBasic(t, nodebalancerName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckLinodeNodeBalancerConfigExists,
 					resource.TestCheckResourceAttr(resName, "port", "8080"),
@@ -46,11 +46,13 @@ func TestAccDataSourceLinodeNodeBalancerConfig_basic(t *testing.T) {
 	})
 }
 
-func testDataSourceLinodeNodeBalancerConfigBasic(nodeBalancerName string) string {
-	return testAccCheckLinodeNodeBalancerConfigBasic(nodeBalancerName) + `
-data "linode_nodebalancer_config" "foofig" {
-	id = "${linode_nodebalancer_config.foofig.id}"
-	nodebalancer_id = "${linode_nodebalancer.foobar.id}"
+type DataNodeBalancerConfigTemplateData struct {
+	Config NodeBalancerConfigTemplateData
 }
-`
+
+func testDataSourceLinodeNodeBalancerConfigBasic(t *testing.T, nodeBalancerName string) string {
+	return testAccExecuteTemplate(t, "data_nodebalancer_config_basic",
+		DataNodeBalancerConfigTemplateData{
+			Config: NodeBalancerConfigTemplateData{
+				NodeBalancer: NodeBalancerTemplateData{Label: nodeBalancerName}}})
 }

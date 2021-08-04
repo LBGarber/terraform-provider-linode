@@ -1,0 +1,35 @@
+{{ define "user_grants" }}
+resource "linode_user" "test" {
+    username = "{{.Username}}"
+    email = "{{.Email}}"
+    restricted = true
+
+    global_grants {
+        add_linodes = true
+        add_nodebalancers = true
+        add_domains = true
+        add_firewalls = true
+    }
+}
+{{ end }}
+
+{{ define "user_grants_updates" }}
+{{ template "instance_basic" .Instance }}
+
+resource "linode_user" "test" {
+    username = "{{.Username}}"
+    email = "{{.Email}}"
+    restricted = true
+
+    global_grants {
+        account_access = "read_only"
+        add_linodes = true
+        add_images = true
+    }
+
+    linode_grant {
+        id = linode_instance.foobar.id
+        permissions = "read_write"
+    }
+}
+{{ end }}

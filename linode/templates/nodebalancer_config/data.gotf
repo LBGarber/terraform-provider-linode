@@ -1,0 +1,8 @@
+{{ define "data_nodebalancer_config_basic" }}
+{{ template "nodebalancer_config_basic" .Config}}
+
+data "linode_nodebalancer_config" "foofig" {
+    id = "${linode_nodebalancer_config.foofig.id}"
+    nodebalancer_id = "${linode_nodebalancer.foobar.id}"
+}
+{{ end }}

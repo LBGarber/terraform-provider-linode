@@ -1,0 +1,7 @@
+{{ define "data_image" }}
+
+data "linode_image" "foobar" {
+    id = "{{.ID}}"
+}
+
+{{ end }}

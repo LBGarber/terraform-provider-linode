@@ -18,7 +18,7 @@ func TestAccLinodeNodeBalancerNode_basic(t *testing.T) {
 
 	resName := "linode_nodebalancer_node.foonode"
 	nodeName := acctest.RandomWithPrefix("tf_test")
-	config := testAccCheckLinodeNodeBalancerNodeBasic(nodeName)
+	config := testAccCheckLinodeNodeBalancerNodeBasic(t, nodeName)
 
 	resource.Test(t, resource.TestCase{
 		PreventPostDestroyRefresh: true,
@@ -60,7 +60,7 @@ func TestAccLinodeNodeBalancerNode_update(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeNodeBalancerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: accTestWithProvider(testAccCheckLinodeNodeBalancerNodeBasic(nodeName), map[string]interface{}{
+				Config: accTestWithProvider(testAccCheckLinodeNodeBalancerNodeBasic(t, nodeName), map[string]interface{}{
 					providerKeySkipInstanceReadyPoll: true,
 				}),
 				Check: resource.ComposeTestCheckFunc(
@@ -70,7 +70,7 @@ func TestAccLinodeNodeBalancerNode_update(t *testing.T) {
 				),
 			},
 			{
-				Config: accTestWithProvider(testAccCheckLinodeNodeBalancerNodeUpdates(nodeName), map[string]interface{}{
+				Config: accTestWithProvider(testAccCheckLinodeNodeBalancerNodeUpdates(t, nodeName), map[string]interface{}{
 					providerKeySkipInstanceReadyPoll: true,
 				}),
 				Check: resource.ComposeTestCheckFunc(
@@ -221,27 +221,36 @@ func testAccStateIDNodeBalancerNode(s *terraform.State) (string, error) {
 	return "", fmt.Errorf("Error finding linode_nodebalancer_config")
 }
 
-func testAccCheckLinodeNodeBalancerNodeBasic(label string) string {
-	return testAccCheckLinodeInstanceConfigPrivateNetworking(label, publicKeyMaterial) + testAccCheckLinodeNodeBalancerConfigBasic(label) + fmt.Sprintf(`
-resource "linode_nodebalancer_node" "foonode" {
-	nodebalancer_id = "${linode_nodebalancer.foobar.id}"
-	config_id = "${linode_nodebalancer_config.foofig.id}"
-	address = "${linode_instance.foobar.private_ip_address}:80"
-	label = "%s"
-	weight = 50
-}
-`, label)
+type NodeBalancerNodeTemplateData struct {
+	Label    string
+	Config   NodeBalancerConfigTemplateData
+	Instance InstanceTemplateData
 }
 
-func testAccCheckLinodeNodeBalancerNodeUpdates(label string) string {
-	return testAccCheckLinodeInstanceConfigPrivateNetworking(label, publicKeyMaterial) + testAccCheckLinodeNodeBalancerConfigBasic(label) + fmt.Sprintf(`
-resource "linode_nodebalancer_node" "foonode" {
-	nodebalancer_id = "${linode_nodebalancer.foobar.id}"
-	config_id = "${linode_nodebalancer_config.foofig.id}"
-	address = "${linode_instance.foobar.private_ip_address}:8080"
-	label = "%s_r"
-	weight = 200
+func testAccCheckLinodeNodeBalancerNodeBasic(t *testing.T, label string) string {
+	return testAccExecuteTemplate(t, "nodebalancer_node_basic",
+		NodeBalancerNodeTemplateData{
+			Label: label,
+			Config: NodeBalancerConfigTemplateData{
+				NodeBalancer: NodeBalancerTemplateData{Label: label},
+			},
+			Instance: InstanceTemplateData{
+				Label:  label,
+				PubKey: publicKeyMaterial,
+			},
+		})
 }
 
-`, label)
+func testAccCheckLinodeNodeBalancerNodeUpdates(t *testing.T, label string) string {
+	return testAccExecuteTemplate(t, "nodebalancer_node_updates",
+		NodeBalancerNodeTemplateData{
+			Label: label,
+			Config: NodeBalancerConfigTemplateData{
+				NodeBalancer: NodeBalancerTemplateData{Label: label},
+			},
+			Instance: InstanceTemplateData{
+				Label:  label,
+				PubKey: publicKeyMaterial,
+			},
+		})
 }

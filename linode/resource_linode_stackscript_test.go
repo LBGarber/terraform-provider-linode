@@ -56,7 +56,7 @@ func TestAccLinodeStackscript_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeStackscriptDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeStackscriptBasic(stackscriptName),
+				Config: testAccCheckLinodeStackscriptBasic(t, stackscriptName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeStackscriptExists,
 					resource.TestCheckResourceAttr(resName, "description", "tf_test stackscript"),
@@ -86,7 +86,7 @@ func TestAccLinodeStackscript_update(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeStackscriptDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeStackscriptBasic(stackscriptName),
+				Config: testAccCheckLinodeStackscriptBasic(t, stackscriptName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeStackscriptExists,
 					resource.TestCheckResourceAttr(resName, "description", "tf_test stackscript"),
@@ -96,7 +96,7 @@ func TestAccLinodeStackscript_update(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeStackscriptBasicRenamed(stackscriptName),
+				Config: testAccCheckLinodeStackscriptBasicRenamed(t, stackscriptName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeStackscriptExists,
 					resource.TestCheckResourceAttr(resName, "description", "tf_test stackscript"),
@@ -125,7 +125,7 @@ func TestAccLinodeStackscript_codeChange(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeStackscriptDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeStackscriptBasic(stackscriptName),
+				Config: testAccCheckLinodeStackscriptBasic(t, stackscriptName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeStackscriptExists,
 					resource.TestCheckResourceAttr(resName, "description", "tf_test stackscript"),
@@ -137,7 +137,7 @@ func TestAccLinodeStackscript_codeChange(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeStackscriptCodeChange(stackscriptName),
+				Config: testAccCheckLinodeStackscriptCodeChange(t, stackscriptName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeStackscriptExists,
 					resource.TestCheckResourceAttr(resName, "description", "tf_test stackscript"),
@@ -214,45 +214,21 @@ func testAccCheckLinodeStackscriptDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckLinodeStackscriptBasic(stackscript string) string {
-	return fmt.Sprintf(`
-resource "linode_stackscript" "foobar" {
-	label = "%s"
-	script = <<EOF
-#!/bin/bash
-echo hello
-EOF
-	images = ["linode/ubuntu18.04"]
-	description = "tf_test stackscript"
-	rev_note = "initial"
-}`, stackscript)
+type StackScriptTemplateData struct {
+	Label string
 }
 
-func testAccCheckLinodeStackscriptBasicRenamed(stackscript string) string {
-	return fmt.Sprintf(`
-resource "linode_stackscript" "foobar" {
-	label = "%s_renamed"
-	script = <<EOF
-#!/bin/bash
-echo hello
-EOF
-	images = ["linode/ubuntu18.04"]
-	description = "tf_test stackscript"
-	rev_note = "initial"
-}`, stackscript)
+func testAccCheckLinodeStackscriptBasic(t *testing.T, stackscript string) string {
+	return testAccExecuteTemplate(t, "stackscript_basic",
+		StackScriptTemplateData{Label: stackscript})
 }
 
-func testAccCheckLinodeStackscriptCodeChange(stackscript string) string {
-	return fmt.Sprintf(`
-resource "linode_stackscript" "foobar" {
-	label = "%s"
-	script = <<EOF
-#!/bin/bash
-# <UDF name="hasudf" label="a label" example="an example" default="a default">
-echo bye
-EOF
-	images = ["linode/ubuntu18.04", "linode/ubuntu16.04lts"]
-	description = "tf_test stackscript"
-	rev_note = "second"
-}`, stackscript)
+func testAccCheckLinodeStackscriptBasicRenamed(t *testing.T, stackscript string) string {
+	return testAccExecuteTemplate(t, "stackscript_basic",
+		StackScriptTemplateData{Label: stackscript + "_renamed"})
+}
+
+func testAccCheckLinodeStackscriptCodeChange(t *testing.T, stackscript string) string {
+	return testAccExecuteTemplate(t, "stackscript_code_change",
+		StackScriptTemplateData{Label: stackscript})
 }

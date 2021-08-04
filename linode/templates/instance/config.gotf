@@ -1,0 +1,328 @@
+{{ define "instance_config" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    group = "tf_test"
+    type = "g6-nanode-1"
+    region = "us-east"
+    alerts {
+        cpu = 60
+    }
+    config {
+        label = "config"
+        kernel = "linode/latest-64bit"
+        root_device = "/dev/sda"
+        helpers {
+            network = true
+        }
+    }
+
+    boot_config_label = "config"
+}
+{{end}}
+
+{{ define "instance_multiconfig" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    group = "tf_test"
+    type = "g6-nanode-1"
+    region = "us-east"
+    config {
+        label = "configa"
+        kernel = "linode/latest-64bit"
+        root_device = "/dev/sda"
+    }
+    config {
+        label = "configb"
+        kernel = "linode/latest-32bit"
+        root_device = "/dev/sda"
+    }
+
+    boot_config_label = "configa"
+}
+{{end}}
+
+{{ define "instance_multiconfig_updated" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    group = "tf_test"
+    type = "g6-nanode-1"
+    region = "us-east"
+    config {
+        label = "configa"
+        comments = "configa"
+        kernel = "linode/latest-32bit"
+        root_device = "/dev/sda"
+    }
+    config {
+        label = "configb"
+        comments = "configb"
+        kernel = "linode/latest-64bit"
+        root_device = "/dev/sda"
+    }
+    config {
+        label = "configc"
+        comments = "configc"
+        kernel = "linode/latest-64bit"
+        root_device = "/dev/sda"
+    }
+
+    boot_config_label = "configa"
+}
+{{end}}
+
+{{ define "instance_disk_config" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    type = "g6-nanode-1"
+    region = "us-east"
+    group = "tf_test"
+
+    disk {
+        label = "disk"
+        image = "linode/ubuntu18.04"
+        root_pass = "b4d_p4s5"
+        authorized_keys = ["{{.PubKey}}"]
+        size = 3000
+    }
+
+    config {
+        label = "config"
+        kernel = "linode/latest-64bit"
+        devices {
+            sda {
+                disk_label = "disk"
+            }
+        }
+    }
+}
+{{end}}
+
+{{ define "instance_disk_config_larger" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    type = "g6-standard-1"
+    region = "us-east"
+    group = "tf_test"
+
+    disk {
+        label = "disk"
+        image = "linode/ubuntu18.04"
+        root_pass = "terraform-test"
+        authorized_keys = ["{{.PubKey}}"]
+        size = 51200
+    }
+
+    config {
+        label = "config"
+        kernel = "linode/latest-64bit"
+        devices {
+            sda {
+                disk_label = "disk"
+            }
+        }
+    }
+}
+{{ end }}
+
+{{ define "instance_disk_config_resized" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    type = "g6-nanode-1"
+    region = "us-east"
+    group = "tf_test"
+
+    disk {
+        label = "disk"
+        image = "linode/ubuntu18.04"
+        root_pass = "b4d_p4s5"
+        authorized_keys = ["{{.PubKey}}"]
+        size = 6000
+    }
+
+    config {
+        label = "config"
+        kernel = "linode/latest-64bit"
+        devices {
+            sda {
+                disk_label = "disk"
+            }
+        }
+    }
+}
+{{ end }}
+
+{{ define "instance_disk_config_resized_expanded" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    type = "g6-standard-1"
+    region = "us-east"
+    group = "tf_test"
+
+    disk {
+        label = "disk"
+        image = "linode/ubuntu18.04"
+        root_pass = "b4d_p4s5"
+        authorized_keys = ["{{.PubKey}}"]
+        size = 6000
+    }
+
+    config {
+        label = "config"
+        kernel = "linode/latest-64bit"
+        devices {
+            sda {
+                disk_label = "disk"
+            }
+        }
+    }
+}
+{{ end }}
+
+{{ define "instance_disk_config_reordered" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    type = "g6-standard-1"
+    region = "us-east"
+    group = "tf_test"
+
+    disk {
+        label = "disk"
+        image = "linode/ubuntu18.04"
+        root_pass = "b4d_p4s5"
+        authorized_keys = ["{{.PubKey}}"]
+        size = 3000
+    }
+
+    disk {
+        label = "diskb"
+        image = "linode/ubuntu18.04"
+        root_pass = "b4d_p4s5"
+        authorized_keys = ["{{.PubKey}}"]
+        size = 3000
+    }
+
+    config {
+        label = "config"
+        kernel = "linode/latest-64bit"
+        devices {
+            sda {
+                disk_label = "diskb"
+            }
+            sdb {
+                disk_label = "disk"
+            }
+        }
+    }
+}
+{{ end }}
+
+{{ define "instance_multi_disk_config"}}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    type = "g6-nanode-1"
+    region = "us-east"
+    group = "tf_test"
+
+    disk {
+        label = "diska"
+        image = "linode/ubuntu18.04"
+        root_pass = "b4d_p4s5"
+        authorized_keys = ["{{.PubKey}}"]
+        size = 3000
+    }
+
+    disk {
+        label = "diskb"
+        filesystem = "swap"
+        size = 512
+    }
+
+    config {
+        label = "configa"
+        kernel = "linode/latest-64bit"
+        devices {
+            sda {
+                disk_label = "diska"
+            }
+            sdb {
+                disk_label = "diskb"
+            }
+        }
+    }
+
+    config {
+        label = "configb"
+        comments = "won't boot"
+        kernel = "linode/grub2"
+        devices {
+            sda {
+                disk_label = "diskb"
+            }
+            sdb {
+                disk_label = "diska"
+            }
+        }
+    }
+
+    boot_config_label = "configa"
+}
+{{ end }}
+
+{{ define "instance_volume_config"}}
+resource "linode_volume" "foo" {
+    label = "{{.Label}}"
+    size = "10"
+    region = "us-east"
+}
+
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    type = "g6-nanode-1"
+    region = "us-east"
+    group = "tf_test"
+
+    disk {
+        label = "disk"
+        image = "linode/ubuntu18.04"
+        root_pass = "b4d_p4s5"
+        authorized_keys = ["{{.PubKey}}"]
+        size = 3000
+    }
+
+    config {
+        label = "config"
+        kernel = "linode/latest-64bit"
+        devices {
+            sda {
+                disk_label = "disk"
+            }
+            sdb {
+                volume_id = "${linode_volume.foo.id}"
+            }
+        }
+    }
+}
+{{ end }}
+
+{{ define "instance_config_simple_updates" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}_r"
+    type = "g6-nanode-1"
+    region = "us-east"
+    group = "tf_test_r"
+
+    alerts {
+        cpu = 80
+    }
+
+    config {
+        label = "config"
+        kernel = "linode/latest-32bit"
+        root_device = "/dev/sda"
+        helpers {
+            network = false
+        }
+    }
+    boot_config_label = "config"
+}
+{{ end }}

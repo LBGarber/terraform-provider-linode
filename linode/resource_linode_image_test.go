@@ -68,7 +68,7 @@ func TestAccLinodeImage_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeImageDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeImageConfigBasic(ImageName),
+				Config: testAccCheckLinodeImageConfigBasic(t, ImageName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeImageExists(resName, nil),
 					resource.TestCheckResourceAttr(resName, "label", ImageName),
@@ -103,7 +103,7 @@ func TestAccLinodeImage_update(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeImageDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeImageConfigBasic(imageName),
+				Config: testAccCheckLinodeImageConfigBasic(t, imageName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeImageExists(resName, nil),
 					resource.TestCheckResourceAttr(resName, "label", imageName),
@@ -111,7 +111,7 @@ func TestAccLinodeImage_update(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeImageConfigUpdates(imageName),
+				Config: testAccCheckLinodeImageConfigUpdates(t, imageName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeImageExists(resName, nil),
 					resource.TestCheckResourceAttr(resName, "label", fmt.Sprintf("%s_renamed", imageName)),
@@ -154,7 +154,7 @@ func TestAccLinodeImage_uploadFile(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeImageDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeImageConfigUpload(imageName, file.Name()),
+				Config: testAccCheckLinodeImageConfigUpload(t, imageName, file.Name()),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeImageExists(resName, &image),
 					resource.TestCheckResourceAttr(resName, "label", imageName),
@@ -173,7 +173,7 @@ func TestAccLinodeImage_uploadFile(t *testing.T) {
 				PreConfig: func() {
 					file.Write(testImageBytesNew)
 				},
-				Config: testAccCheckLinodeImageConfigUpload(imageName, file.Name()),
+				Config: testAccCheckLinodeImageConfigUpload(t, imageName, file.Name()),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeImageExists(resName, &image),
 					resource.TestCheckResourceAttr(resName, "status", string(linodego.ImageStatusAvailable)),
@@ -243,57 +243,36 @@ func testAccCreateTempFile(name string, content []byte) (*os.File, error) {
 	return file, nil
 }
 
-func testAccCheckLinodeImageConfigBasic(image string) string {
-	return fmt.Sprintf(`
-	resource "linode_instance" "foobar" {
-		label = "%s"
-		group = "tf_test"
-		type = "g6-standard-1"
-		region = "us-east"
-		disk {
-			label = "disk"
-			size = 1000
-			filesystem = "ext4"
-		}
-	}
-
-	resource "linode_image" "foobar" {
-		linode_id = "${linode_instance.foobar.id}"
-		disk_id = "${linode_instance.foobar.disk.0.id}"
-		label = "%s"
-		description = "descriptive text"
-	}`, image, image)
+type ImageTemplateData struct {
+	InstanceLabel string
+	Label         string
+	Description   string
 }
 
-func testAccCheckLinodeImageConfigUpdates(image string) string {
-	return fmt.Sprintf(`
-	resource "linode_instance" "foobar" {
-		label = "%s"
-		group = "tf_test"
-		type = "g6-standard-1"
-		region = "us-east"
-		disk {
-			label = "disk"
-			size = 1000
-			filesystem = "ext4"
-		}
-	}
-	
-	resource "linode_image" "foobar" {
-		linode_id = "${linode_instance.foobar.id}"
-		disk_id = "${linode_instance.foobar.disk.0.id}"
-		label = "%s_renamed"
-		description = "more descriptive text"
-	}`, image, image)
+type ImageUploadTemplateData struct {
+	Label    string
+	FilePath string
 }
 
-func testAccCheckLinodeImageConfigUpload(image string, file string) string {
-	return fmt.Sprintf(`
-resource "linode_image" "foobar" {
-	label = "%s"
-	file_path = "%s"
-	file_hash = filemd5("%s")
-	region = "us-southeast"
-	description = "really descriptive text"
-}`, image, file, file)
+func testAccCheckLinodeImageConfigBasic(t *testing.T, image string) string {
+	return testAccExecuteTemplate(t, "image_basic", ImageTemplateData{
+		InstanceLabel: image,
+		Label:         image,
+		Description:   "descriptive text",
+	})
+}
+
+func testAccCheckLinodeImageConfigUpdates(t *testing.T, image string) string {
+	return testAccExecuteTemplate(t, "image_basic", ImageTemplateData{
+		InstanceLabel: image,
+		Label:         image + "_renamed",
+		Description:   "more descriptive text",
+	})
+}
+
+func testAccCheckLinodeImageConfigUpload(t *testing.T, image string, file string) string {
+	return testAccExecuteTemplate(t, "image_upload", ImageUploadTemplateData{
+		Label:    image,
+		FilePath: file,
+	})
 }

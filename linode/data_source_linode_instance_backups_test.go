@@ -2,7 +2,6 @@ package linode
 
 import (
 	"context"
-	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/linode/linodego"
@@ -25,7 +24,7 @@ func TestAccDataSourceLinodeInstanceBackups_basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testDataSourceLinodeInstanceBackupsInstance(instanceName),
+				Config: testDataSourceLinodeInstanceBackupsInstance(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists("linode_instance.foobar", &instance),
 				),
@@ -40,7 +39,7 @@ func TestAccDataSourceLinodeInstanceBackups_basic(t *testing.T) {
 
 					snapshot = newSnapshot
 				},
-				Config: testDataSourceLinodeInstanceBackupsBasic(instanceName),
+				Config: testDataSourceLinodeInstanceBackupsBasic(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "in_progress.0.id"),
 					resource.TestCheckResourceAttr(resourceName, "in_progress.0.label", snapshotName),
@@ -56,7 +55,7 @@ func TestAccDataSourceLinodeInstanceBackups_basic(t *testing.T) {
 						t.Fatal(err)
 					}
 				},
-				Config: testDataSourceLinodeInstanceBackupsBasic(instanceName),
+				Config: testDataSourceLinodeInstanceBackupsBasic(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "current.0.id"),
 					resource.TestCheckResourceAttr(resourceName, "current.0.label", snapshotName),
@@ -71,22 +70,16 @@ func TestAccDataSourceLinodeInstanceBackups_basic(t *testing.T) {
 	})
 }
 
-func testDataSourceLinodeInstanceBackupsInstance(label string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	type = "g6-nanode-1"
-	image = "linode/alpine3.13"
-	region = "us-east"
-	root_pass = "terraform-test"
-	swap_size = 256
-	backups_enabled = true
-}`, label)
+type DataInstanceBackupsTemplateData struct {
+	Label string
 }
 
-func testDataSourceLinodeInstanceBackupsBasic(instanceLabel string) string {
-	return testDataSourceLinodeInstanceBackupsInstance(instanceLabel) + `
-data "linode_instance_backups" "foobar" {
-	linode_id = linode_instance.foobar.id
-}`
+func testDataSourceLinodeInstanceBackupsInstance(t *testing.T, instanceLabel string) string {
+	return testAccExecuteTemplate(t, "data_instance_backups_instance",
+		DataInstanceBackupsTemplateData{Label: instanceLabel})
+}
+
+func testDataSourceLinodeInstanceBackupsBasic(t *testing.T, instanceLabel string) string {
+	return testAccExecuteTemplate(t, "data_instance_backups_basic",
+		DataInstanceBackupsTemplateData{Label: instanceLabel})
 }

@@ -17,7 +17,7 @@ func TestAccDataSourceLinodeImages_basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testDataSourceLinodeImagesBasic(imageName),
+				Config: testDataSourceLinodeImagesBasic(t, imageName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "images.0.label", imageName),
 					resource.TestCheckResourceAttr(resourceName, "images.0.description", "descriptive text"),
@@ -33,17 +33,9 @@ func TestAccDataSourceLinodeImages_basic(t *testing.T) {
 	})
 }
 
-func testDataSourceLinodeImagesBasic(image string) string {
-	return testAccCheckLinodeImageConfigBasic(image) + `
-data "linode_images" "foobar" {
-	filter {
-		name = "label"
-		values = [linode_image.foobar.label]
-	}
-
-	filter {
-		name = "is_public"
-		values = ["false"]
-	}
-}`
+func testDataSourceLinodeImagesBasic(t *testing.T, image string) string {
+	return testAccExecuteTemplate(t, "data_images", ImageTemplateData{
+		InstanceLabel: image,
+		Label:         image,
+		Description:   "descriptive text"})
 }

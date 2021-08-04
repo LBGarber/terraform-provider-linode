@@ -1,0 +1,11 @@
+{{ define "object_storage_key_basic"}}
+resource "linode_object_storage_key" "foobar" {
+    label = "{{.Label}}"
+}
+{{end}}
+
+{{ define "object_storage_key_updates"}}
+resource "linode_object_storage_key" "foobar" {
+    label = "{{.Label}}_renamed"
+}
+{{end}}

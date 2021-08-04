@@ -1,0 +1,19 @@
+{{ define "data_instance_backups_instance" }}
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    type = "g6-nanode-1"
+    image = "linode/alpine3.13"
+    region = "us-east"
+    root_pass = "terraform-test"
+    swap_size = 256
+    backups_enabled = true
+}
+{{ end }}
+
+{{ define "data_instance_backups_basic" }}
+{{ template "data_instance_backups_instance" . }}
+
+data "linode_instance_backups" "foobar" {
+    linode_id = linode_instance.foobar.id
+}
+{{ end }}

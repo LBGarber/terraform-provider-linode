@@ -18,7 +18,7 @@ func TestAccDataSourceLinodeNodeBalancer_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeNodeBalancerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testDataSourceLinodeNodeBalancerBasic(nodebalancerName),
+				Config: testDataSourceLinodeNodeBalancerBasic(t, nodebalancerName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeNodeBalancerExists,
 					resource.TestCheckResourceAttr(resName, "label", nodebalancerName),
@@ -41,8 +41,8 @@ func TestAccDataSourceLinodeNodeBalancer_basic(t *testing.T) {
 	})
 }
 
-func testDataSourceLinodeNodeBalancerBasic(nodeBalancerName string) string {
-	return testAccCheckLinodeNodeBalancerBasic(nodeBalancerName) + `
+func testDataSourceLinodeNodeBalancerBasic(t *testing.T, nodeBalancerName string) string {
+	return testAccCheckLinodeNodeBalancerBasic(t, nodeBalancerName) + `
 data "linode_nodebalancer" "foobar" {
 	id = "${linode_nodebalancer.foobar.id}"
 }

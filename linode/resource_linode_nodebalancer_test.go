@@ -56,7 +56,7 @@ func TestAccLinodeNodeBalancer_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeNodeBalancerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeNodeBalancerBasic(nodebalancerName),
+				Config: testAccCheckLinodeNodeBalancerBasic(t, nodebalancerName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeNodeBalancerExists,
 					resource.TestCheckResourceAttr(resName, "label", nodebalancerName),
@@ -94,7 +94,7 @@ func TestAccLinodeNodeBalancer_update(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeNodeBalancerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeNodeBalancerBasic(nodebalancerName),
+				Config: testAccCheckLinodeNodeBalancerBasic(t, nodebalancerName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeNodeBalancerExists,
 					resource.TestCheckResourceAttr(resName, "label", nodebalancerName),
@@ -102,7 +102,7 @@ func TestAccLinodeNodeBalancer_update(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeNodeBalancerUpdates(nodebalancerName),
+				Config: testAccCheckLinodeNodeBalancerUpdates(t, nodebalancerName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeNodeBalancerExists,
 					resource.TestCheckResourceAttr(resName, "label", fmt.Sprintf("%s_r", nodebalancerName)),
@@ -167,24 +167,17 @@ func testAccCheckLinodeNodeBalancerDestroy(s *terraform.State) error {
 
 	return nil
 }
-func testAccCheckLinodeNodeBalancerBasic(nodebalancer string) string {
-	return fmt.Sprintf(`
-resource "linode_nodebalancer" "foobar" {
-	label = "%s"
-	region = "us-east"
-	client_conn_throttle = 20
-	tags = ["tf_test"]
-}
-`, nodebalancer)
+
+type NodeBalancerTemplateData struct {
+	Label string
 }
 
-func testAccCheckLinodeNodeBalancerUpdates(nodebalancer string) string {
-	return fmt.Sprintf(`
-resource "linode_nodebalancer" "foobar" {
-	label = "%s_r"
-	region = "us-east"
-	client_conn_throttle = 0
-	tags = ["tf_test", "tf_test_2"]
+func testAccCheckLinodeNodeBalancerBasic(t *testing.T, nodebalancer string) string {
+	return testAccExecuteTemplate(t, "nodebalancer_basic",
+		NodeBalancerTemplateData{Label: nodebalancer})
 }
-`, nodebalancer)
+
+func testAccCheckLinodeNodeBalancerUpdates(t *testing.T, nodebalancer string) string {
+	return testAccExecuteTemplate(t, "nodebalancer_updates",
+		NodeBalancerTemplateData{Label: nodebalancer})
 }

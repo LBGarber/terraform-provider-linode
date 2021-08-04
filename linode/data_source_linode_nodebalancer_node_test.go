@@ -18,7 +18,7 @@ func TestAccDataSourceLinodeNodeBalancerNode_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeNodeBalancerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: accTestWithProvider(testDataSourceLinodeNodeBalancerNodeBasic(nodebalancerName), map[string]interface{}{
+				Config: accTestWithProvider(testDataSourceLinodeNodeBalancerNodeBasic(t, nodebalancerName), map[string]interface{}{
 					providerKeySkipInstanceReadyPoll: true,
 				}),
 				Check: resource.ComposeTestCheckFunc(
@@ -33,12 +33,22 @@ func TestAccDataSourceLinodeNodeBalancerNode_basic(t *testing.T) {
 	})
 }
 
-func testDataSourceLinodeNodeBalancerNodeBasic(nodeBalancerName string) string {
-	return testAccCheckLinodeNodeBalancerNodeBasic(nodeBalancerName) + `
-data "linode_nodebalancer_node" "foonode" {
-	id = "${linode_nodebalancer_node.foonode.id}"
-	config_id = "${linode_nodebalancer_config.foofig.id}"
-	nodebalancer_id = "${linode_nodebalancer.foobar.id}"
+type DataNodeBalancerNodeTemplateData struct {
+	Node NodeBalancerNodeTemplateData
 }
-`
+
+func testDataSourceLinodeNodeBalancerNodeBasic(t *testing.T, nodeBalancerName string) string {
+	return testAccExecuteTemplate(t, "data_nodebalancer_node_basic",
+		DataNodeBalancerNodeTemplateData{
+			Node: NodeBalancerNodeTemplateData{
+				Label: nodeBalancerName,
+				Config: NodeBalancerConfigTemplateData{
+					NodeBalancer: NodeBalancerTemplateData{Label: nodeBalancerName},
+				},
+				Instance: InstanceTemplateData{
+					Label:  nodeBalancerName,
+					PubKey: publicKeyMaterial,
+				},
+			},
+		})
 }

@@ -58,7 +58,7 @@ func TestAccLinodeTemplate_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeTemplateDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeTemplateConfigBasic(templateName),
+				Config: testAccCheckLinodeTemplateConfigBasic(t, templateName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeTemplateExists,
 					resource.TestCheckResourceAttr(resName, "label", templateName),
@@ -85,14 +85,14 @@ func TestAccLinodeTemplate_update(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeTemplateDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeTemplateConfigBasic(templateName),
+				Config: testAccCheckLinodeTemplateConfigBasic(t, templateName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeTemplateExists,
 					resource.TestCheckResourceAttr(resName, "label", templateName),
 				),
 			},
 			{
-				Config: testAccCheckLinodeTemplateConfigUpdates(templateName),
+				Config: testAccCheckLinodeTemplateConfigUpdates(t, templateName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeTemplateExists,
 					resource.TestCheckResourceAttr(resName, "label", fmt.Sprintf("%s_renamed", templateName)),
@@ -157,16 +157,20 @@ func testAccCheckLinodeTemplateDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckLinodeTemplateConfigBasic(template string) string {
-	return fmt.Sprintf(`
-resource "linode_template" "foobar" {
-	label = "%s"
-}`, template)
+type TemplateTemplateData struct {
+	Label string
 }
 
-func testAccCheckLinodeTemplateConfigUpdates(template string) string {
-	return fmt.Sprintf(`
-resource "linode_template" "foobar" {
-	label = "%s_renamed"
-}`, template)
+func testAccCheckLinodeTemplateConfigBasic(t *testing.T, template string) string {
+	return testAccExecuteTemplate(t, "template_basic",
+		TemplateTemplateData{
+			Label: template,
+		})
+}
+
+func testAccCheckLinodeTemplateConfigUpdates(t *testing.T, template string) string {
+	return testAccExecuteTemplate(t, "template_updates",
+		TemplateTemplateData{
+			Label: template,
+		})
 }

@@ -56,7 +56,7 @@ func TestAccLinodeSSHKey_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeSSHKeyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeSSHKeyConfigBasic(sshkeyName, publicKeyMaterial),
+				Config: testAccCheckLinodeSSHKeyConfigBasic(t, sshkeyName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeSSHKeyExists,
 					resource.TestCheckResourceAttr(resName, "label", sshkeyName),
@@ -85,7 +85,7 @@ func TestAccLinodeSSHKey_update(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeSSHKeyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeSSHKeyConfigBasic(sshkeyName, publicKeyMaterial),
+				Config: testAccCheckLinodeSSHKeyConfigBasic(t, sshkeyName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeSSHKeyExists,
 					resource.TestCheckResourceAttr(resName, "label", sshkeyName),
@@ -94,7 +94,7 @@ func TestAccLinodeSSHKey_update(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeSSHKeyConfigUpdates(sshkeyName, publicKeyMaterial),
+				Config: testAccCheckLinodeSSHKeyConfigUpdates(t, sshkeyName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeSSHKeyExists,
 					resource.TestCheckResourceAttr(resName, "label", fmt.Sprintf("%s_renamed", sshkeyName)),
@@ -163,18 +163,23 @@ func testAccCheckLinodeSSHKeyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckLinodeSSHKeyConfigBasic(label, sshkey string) string {
-	return fmt.Sprintf(`
-resource "linode_sshkey" "foobar" {
-	label = "%s"
-	ssh_key = "%s"
-}`, label, sshkey)
+type SSHKeyTemplateData struct {
+	Label string
+	Key   string
 }
 
-func testAccCheckLinodeSSHKeyConfigUpdates(label, sshkey string) string {
-	return fmt.Sprintf(`
-resource "linode_sshkey" "foobar" {
-	label = "%s_renamed"
-	ssh_key = "%s"
-}`, label, sshkey)
+func testAccCheckLinodeSSHKeyConfigBasic(t *testing.T, label, sshkey string) string {
+	return testAccExecuteTemplate(t, "sshkey_basic",
+		SSHKeyTemplateData{
+			Label: label,
+			Key:   sshkey,
+		})
+}
+
+func testAccCheckLinodeSSHKeyConfigUpdates(t *testing.T, label, sshkey string) string {
+	return testAccExecuteTemplate(t, "sshkey_updates",
+		SSHKeyTemplateData{
+			Label: label,
+			Key:   sshkey,
+		})
 }

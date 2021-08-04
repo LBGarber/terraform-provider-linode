@@ -1,7 +1,6 @@
 package linode
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -17,7 +16,7 @@ func TestAccDataSourceLinodeDomainRecord_basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceLinodeDomainRecordConfigBasic(domain),
+				Config: testAccDataSourceLinodeDomainRecordConfigBasic(t, domain),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(datasourceName, "name", "www"),
 					resource.TestCheckResourceAttr(datasourceName, "type", "CNAME"),
@@ -40,7 +39,7 @@ func TestAccDataSourceLinodeDomainRecord_idLookup(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceLinodeDomainRecordConfigIDLookup(domain),
+				Config: testAccDataSourceLinodeDomainRecordConfigIDLookup(t, domain),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(datasourceName, "name", "www"),
 					resource.TestCheckResourceAttrSet(datasourceName, "id"),
@@ -61,7 +60,7 @@ func TestAccDataSourceLinodeDomainRecord_srv(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceLinodeDomainRecordConfigSRV(domain),
+				Config: testAccDataSourceLinodeDomainRecordConfigSRV(t, domain),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(datasourceName, "type", "SRV"),
 					resource.TestCheckResourceAttr(datasourceName, "port", "80"),
@@ -86,7 +85,7 @@ func TestAccDataSourceLinodeDomainRecord_caa(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceLinodeDomainRecordConfigCAA(domain),
+				Config: testAccDataSourceLinodeDomainRecordConfigCAA(t, domain),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(datasourceName, "name", "caa_test"),
 					resource.TestCheckResourceAttr(datasourceName, "type", "CAA"),
@@ -101,96 +100,26 @@ func TestAccDataSourceLinodeDomainRecord_caa(t *testing.T) {
 	})
 }
 
-func testAccDataSourceLinodeDomainRecordConfigBasic(domain string) string {
-	return fmt.Sprintf(`
-resource "linode_domain" "domain" {
-	type = "master"
-	domain = "%[1]s"
-	soa_email = "example@%[1]s"
+type DataDomainRecordTemplateData struct {
+	Domain string
 }
 
-resource "linode_domain_record" "record" {
-	domain_id = linode_domain.domain.id
-	name = "www"
-	record_type = "CNAME"
-	target = "%[1]s"
-	ttl_sec = 7200
+func testAccDataSourceLinodeDomainRecordConfigBasic(t *testing.T, domain string) string {
+	return testAccExecuteTemplate(t, "data_domain_record_basic",
+		DataDomainRecordTemplateData{Domain: domain})
 }
 
-data "linode_domain_record" "record" {
-	domain_id = linode_domain.domain.id
-	id = linode_domain_record.record.id
-}
-`, domain)
+func testAccDataSourceLinodeDomainRecordConfigIDLookup(t *testing.T, domain string) string {
+	return testAccExecuteTemplate(t, "data_domain_record_id",
+		DataDomainRecordTemplateData{Domain: domain})
 }
 
-func testAccDataSourceLinodeDomainRecordConfigIDLookup(domain string) string {
-	return fmt.Sprintf(`
-resource "linode_domain" "domain" {
-	type = "master"
-	domain = "%[1]s"
-	soa_email = "example@%[1]s"
+func testAccDataSourceLinodeDomainRecordConfigSRV(t *testing.T, domain string) string {
+	return testAccExecuteTemplate(t, "data_domain_record_srv",
+		DataDomainRecordTemplateData{Domain: domain})
 }
 
-resource "linode_domain_record" "record" {
-	domain_id = linode_domain.domain.id
-	name = "www"
-	record_type = "CNAME"
-	target = "%[1]s"
-}
-
-data "linode_domain_record" "record" {
-	domain_id = linode_domain.domain.id
-	name = linode_domain_record.record.name
-}
-`, domain)
-}
-
-func testAccDataSourceLinodeDomainRecordConfigSRV(domain string) string {
-	return fmt.Sprintf(`
-resource "linode_domain" "domain" {
-	type = "master"
-	domain = "%[1]s"
-	soa_email = "example@%[1]s"
-}
-
-resource "linode_domain_record" "record" {
-	domain_id = linode_domain.domain.id
-	record_type = "SRV"
-	target = "%[1]s"
-	port = 80
-	protocol = "tcp"
-	service = "sip"
-	weight = 5
-	priority = 10
-}
-
-data "linode_domain_record" "record" {
-	domain_id = linode_domain.domain.id
-	name = linode_domain_record.record.name
-}
-`, domain)
-}
-
-func testAccDataSourceLinodeDomainRecordConfigCAA(domain string) string {
-	return fmt.Sprintf(`
-resource "linode_domain" "domain" {
-	type = "master"
-	domain = "%[1]s"
-	soa_email = "example@%[1]s"
-}
-
-resource "linode_domain_record" "record" {
-	name = "caa_test"
-	domain_id = linode_domain.domain.id
-	record_type = "CAA"
-	tag = "issue"
-	target = "test"
-}
-
-data "linode_domain_record" "record" {
-	domain_id = linode_domain.domain.id
-	id = linode_domain_record.record.id
-}
-`, domain)
+func testAccDataSourceLinodeDomainRecordConfigCAA(t *testing.T, domain string) string {
+	return testAccExecuteTemplate(t, "data_domain_record_caa",
+		DataDomainRecordTemplateData{Domain: domain})
 }

@@ -18,7 +18,7 @@ func TestAccDataSourceLinodeVolume_basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeVolumeConfigBasic(volumeName) + testDataSourceLinodeVolumeByID(),
+				Config: testAccCheckLinodeVolumeConfigBasic(t, volumeName) + testDataSourceLinodeVolumeByID(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "region", "us-west"),
 					resource.TestCheckResourceAttr(resourceName, "size", "20"),

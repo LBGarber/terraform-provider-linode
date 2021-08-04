@@ -1,0 +1,85 @@
+{{ define "data_domain_record_basic" }}
+resource "linode_domain" "domain" {
+    type = "master"
+    domain = "{{.Domain}}"
+    soa_email = "example@{{.Domain}}"
+}
+
+resource "linode_domain_record" "record" {
+    domain_id = linode_domain.domain.id
+    name = "www"
+    record_type = "CNAME"
+    target = "{{.Domain}}"
+    ttl_sec = 7200
+}
+
+data "linode_domain_record" "record" {
+    domain_id = linode_domain.domain.id
+    id = linode_domain_record.record.id
+}
+{{ end }}
+
+{{ define "data_domain_record_id" }}
+resource "linode_domain" "domain" {
+    type = "master"
+    domain = "{{.Domain}}"
+    soa_email = "example@{{.Domain}}"
+}
+
+resource "linode_domain_record" "record" {
+    domain_id = linode_domain.domain.id
+    name = "www"
+    record_type = "CNAME"
+    target = "{{.Domain}}"
+}
+
+data "linode_domain_record" "record" {
+    domain_id = linode_domain.domain.id
+    name = linode_domain_record.record.name
+}
+{{ end }}
+
+{{ define "data_domain_record_srv" }}
+resource "linode_domain" "domain" {
+    type = "master"
+    domain = "{{.Domain}}"
+    soa_email = "example@{{.Domain}}"
+}
+
+resource "linode_domain_record" "record" {
+    domain_id = linode_domain.domain.id
+    record_type = "SRV"
+    target = "{{.Domain}}"
+    port = 80
+    protocol = "tcp"
+    service = "sip"
+    weight = 5
+    priority = 10
+}
+
+data "linode_domain_record" "record" {
+    domain_id = linode_domain.domain.id
+    name = linode_domain_record.record.name
+}
+{{ end }}
+
+{{ define "data_domain_record_caa" }}
+resource "linode_domain" "domain" {
+    type = "master"
+    domain = "{{.Domain}}"
+    soa_email = "example@{{.Domain}}"
+}
+
+resource "linode_domain_record" "record" {
+    name = "caa_test"
+    domain_id = linode_domain.domain.id
+    record_type = "CAA"
+    tag = "issue"
+    target = "test"
+}
+
+data "linode_domain_record" "record" {
+    domain_id = linode_domain.domain.id
+    id = linode_domain_record.record.id
+}
+{{ end }}

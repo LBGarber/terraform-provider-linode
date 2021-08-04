@@ -211,7 +211,7 @@ func TestAccLinodeLKECluster_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeLKEClusterBasic(clusterName),
+				Config: testAccCheckLinodeLKEClusterBasic(t, clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testLKEClusterResName, "label", clusterName),
 					resource.TestCheckResourceAttr(testLKEClusterResName, "region", "us-central"),
@@ -241,7 +241,7 @@ func TestAccLinodeLKECluster_k8sUpgrade(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeLKEClusterManyPools(clusterName, "1.19"),
+				Config: testAccCheckLinodeLKEClusterManyPools(t, clusterName, "1.19"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testLKEClusterResName, "label", clusterName),
 					resource.TestCheckResourceAttr(testLKEClusterResName, "region", "us-central"),
@@ -249,7 +249,7 @@ func TestAccLinodeLKECluster_k8sUpgrade(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeLKEClusterManyPools(clusterName, "1.20"),
+				Config: testAccCheckLinodeLKEClusterManyPools(t, clusterName, "1.20"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testLKEClusterResName, "label", clusterName),
 					resource.TestCheckResourceAttr(testLKEClusterResName, "region", "us-central"),
@@ -271,7 +271,7 @@ func TestAccLinodeLKECluster_basicUpdates(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeLKEClusterBasic(clusterName),
+				Config: testAccCheckLinodeLKEClusterBasic(t, clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testLKEClusterResName, "label", clusterName),
 					resource.TestCheckResourceAttr(testLKEClusterResName, "tags.#", "1"),
@@ -280,7 +280,7 @@ func TestAccLinodeLKECluster_basicUpdates(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeLKEClusterBasicUpdates(newClusterName),
+				Config: testAccCheckLinodeLKEClusterBasicUpdates(t, newClusterName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testLKEClusterResName, "label", newClusterName),
 					resource.TestCheckResourceAttr(testLKEClusterResName, "tags.#", "2"),
@@ -302,7 +302,7 @@ func TestAccLinodeLKECluster_poolUpdates(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeLKEClusterBasic(clusterName),
+				Config: testAccCheckLinodeLKEClusterBasic(t, clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testLKEClusterResName, "label", clusterName),
 					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.#", "1"),
@@ -310,7 +310,7 @@ func TestAccLinodeLKECluster_poolUpdates(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeLKEClusterComplexPools(newClusterName),
+				Config: testAccCheckLinodeLKEClusterComplexPools(t, newClusterName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testLKEClusterResName, "label", newClusterName),
 					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.count", "2"),
@@ -320,7 +320,7 @@ func TestAccLinodeLKECluster_poolUpdates(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeLKEClusterBasic(clusterName),
+				Config: testAccCheckLinodeLKEClusterBasic(t, clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testLKEClusterResName, "label", clusterName),
 					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.#", "1"),
@@ -343,7 +343,7 @@ func TestAccLinodeLKECluster_removeUnmanagedPool(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeLKEClusterBasic(clusterName),
+				Config: testAccCheckLinodeLKEClusterBasic(t, clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeLKEClusterExists(&cluster),
 					resource.TestCheckResourceAttr(testLKEClusterResName, "label", clusterName),
@@ -370,94 +370,36 @@ func TestAccLinodeLKECluster_removeUnmanagedPool(t *testing.T) {
 						t.Errorf("expected cluster to have 2 pools but got %d", len(pools))
 					}
 				},
-				Config: testAccCheckLinodeLKEClusterBasic(clusterName),
+				Config: testAccCheckLinodeLKEClusterBasic(t, clusterName),
 				Check:  resource.TestCheckResourceAttr(testLKEClusterResName, "pool.#", "1"),
 			},
 		},
 	})
 }
 
-func testAccCheckLinodeLKEClusterBasic(name string) string {
-	return fmt.Sprintf(`
-resource "linode_lke_cluster" "test" {
-	label       = "%s"
-	region      = "us-central"
-	k8s_version = "1.20"
-	tags        = ["test"]
-
-	pool {
-		type  = "g6-standard-2"
-		count = 3
-	}
-}`, name)
+type LKEClusterTemplateData struct {
+	Label      string
+	K8sVersion string
 }
 
-func testAccCheckLinodeLKEClusterManyPools(name, k8sVersion string) string {
-	return fmt.Sprintf(`
-resource "linode_lke_cluster" "test" {
-	label       = "%s"
-	region      = "us-central"
-	k8s_version = "%s"
-	tags        = ["test"]
-
-	pool {
-		type  = "g6-standard-2"
-		count = 3
-	}
-
-	pool {
-		type = "g6-standard-2"
-		count = 1
-	}
-
-	pool {
-		type = "g6-standard-2"
-		count = 1
-	}
-}`, name, k8sVersion)
+func testAccCheckLinodeLKEClusterBasic(t *testing.T, name string) string {
+	return testAccExecuteTemplate(t, "lke_cluster_basic", LKEClusterTemplateData{
+		Label: name})
 }
 
-func testAccCheckLinodeLKEClusterBasicUpdates(name string) string {
-	return fmt.Sprintf(`
-resource "linode_lke_cluster" "test" {
-	label       = "%s"
-	region      = "us-central"
-	k8s_version = "1.20"
-	tags        = ["test", "new_tag"]
-
-	pool {
-		type  = "g6-standard-2"
-		count = 4
-	}
-}`, name)
+func testAccCheckLinodeLKEClusterManyPools(t *testing.T, name, k8sVersion string) string {
+	return testAccExecuteTemplate(t, "lke_cluster_many_pools", LKEClusterTemplateData{
+		Label:      name,
+		K8sVersion: k8sVersion,
+	})
 }
 
-func testAccCheckLinodeLKEClusterComplexPools(name string) string {
-	return fmt.Sprintf(`
-resource "linode_lke_cluster" "test" {
-	label       = "%s"
-	region      = "us-central"
-	k8s_version = "1.20"
-	tags        = ["test"]
+func testAccCheckLinodeLKEClusterBasicUpdates(t *testing.T, name string) string {
+	return testAccExecuteTemplate(t, "lke_cluster_basic_updates", LKEClusterTemplateData{
+		Label: name})
+}
 
-	pool {
-		type  = "g6-standard-2"
-		count = 2
-	}
-
-	pool {
-		type = "g6-standard-1"
-		count = 1
-	}
-
-	pool {
-		type = "g6-standard-1"
-		count = 2
-	}
-
-	pool {
-		type = "g6-standard-4"
-		count = 2
-	}
-}`, name)
+func testAccCheckLinodeLKEClusterComplexPools(t *testing.T, name string) string {
+	return testAccExecuteTemplate(t, "lke_cluster_complex_pools", LKEClusterTemplateData{
+		Label: name})
 }

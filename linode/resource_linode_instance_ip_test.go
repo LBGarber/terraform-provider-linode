@@ -1,7 +1,6 @@
 package linode
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -20,7 +19,7 @@ func TestAccLinodeInstanceIP_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceIPBasic(name),
+				Config: testAccCheckLinodeInstanceIPBasic(t, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(testInstanceIPResName, "address"),
 					resource.TestCheckResourceAttrSet(testInstanceIPResName, "gateway"),
@@ -46,7 +45,7 @@ func TestAccLinodeInstanceIP_noboot(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: accTestWithProvider(
-					testAccCheckLinodeInstanceIPInstanceNoBoot(name),
+					testAccCheckLinodeInstanceIPInstanceNoBoot(t, name),
 					map[string]interface{}{
 						providerKeySkipInstanceReadyPoll: true,
 					}),
@@ -64,36 +63,18 @@ func TestAccLinodeInstanceIP_noboot(t *testing.T) {
 	})
 }
 
-func testAccCheckLinodeInstanceIPInstance(label string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "%[1]s" {
-	label = "%[1]s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-east"
-        image = "linode/alpine3.14"
-}`, label, publicKeyMaterial)
+type InstanceIPTemplateData struct {
+	Label  string
+	PubKey string
 }
 
-func testAccCheckLinodeInstanceIPBasic(label string) string {
-	return testAccCheckLinodeInstanceIPInstance(label) + fmt.Sprintf(`
-resource "linode_instance_ip" "test" {
-	linode_id = linode_instance.%s.id
-	public = true
-}`, label)
+func testAccCheckLinodeInstanceIPBasic(t *testing.T, label string) string {
+	return testAccExecuteTemplate(t, "instance_ip_basic", InstanceIPTemplateData{Label: label})
 }
 
-func testAccCheckLinodeInstanceIPInstanceNoBoot(label string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "%[1]s" {
-	label = "%[1]s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-east"
-}
-
-resource "linode_instance_ip" "test" {
-	linode_id = linode_instance.%[1]s.id
-	public = true
-}`, label, publicKeyMaterial)
+func testAccCheckLinodeInstanceIPInstanceNoBoot(t *testing.T, label string) string {
+	return testAccExecuteTemplate(t, "instance_ip_basic",
+		InstanceIPTemplateData{
+			Label:  label,
+			PubKey: publicKeyMaterial})
 }

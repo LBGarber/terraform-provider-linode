@@ -1,0 +1,7 @@
+{{ define "volume_resized" }}
+resource "linode_volume" "foobar" {
+    label = "{{.Label}}"
+    region = "us-west"
+    size = 30
+}
+{{ end }}

@@ -1,0 +1,11 @@
+{{ define "template_basic" }}
+resource "linode_template" "foobar" {
+    label = "{{.Label}}"
+}
+{{ end }}
+
+{{ define "template_updates" }}
+resource "linode_template" "foobar" {
+    label = "{{.Label}}_renamed"
+}
+{{ end }}

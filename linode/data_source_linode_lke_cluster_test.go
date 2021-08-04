@@ -19,7 +19,7 @@ func TestAccDataSourceLinodeLKECluster_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testDataSourceLinodeLKEClusterBasic(clusterName),
+				Config: testDataSourceLinodeLKEClusterBasic(t, clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(testLKEClusterDataName, "label", clusterName),
 					resource.TestCheckResourceAttr(testLKEClusterDataName, "region", "us-central"),
@@ -38,8 +38,8 @@ func TestAccDataSourceLinodeLKECluster_basic(t *testing.T) {
 	})
 }
 
-func testDataSourceLinodeLKEClusterBasic(clusterName string) string {
-	return testAccCheckLinodeLKEClusterBasic(clusterName) + `
+func testDataSourceLinodeLKEClusterBasic(t *testing.T, clusterName string) string {
+	return testAccCheckLinodeLKEClusterBasic(t, clusterName) + `
 data "linode_lke_cluster" "test" {
 	id = linode_lke_cluster.test.id
 }`
