@@ -25,7 +25,7 @@ func init() {
 
 	templateFiles := make([]string, 0)
 
-	err = filepath.Walk("../templates", func(path string, info fs.FileInfo, err error) error {
+	err = filepath.Walk("./templates", func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
