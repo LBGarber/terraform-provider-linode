@@ -1,0 +1,12 @@
+{{ define "domain_record_basic" }}
+
+{{ template "domain_basic" . }}
+
+resource "linode_domain_record" "foobar" {
+    domain_id = "${linode_domain.foobar.id}"
+    name = "{{.RecordName}}"
+    record_type = "CNAME"
+    target = "target.{{.Domain}}"
+}
+
+{{ end }}

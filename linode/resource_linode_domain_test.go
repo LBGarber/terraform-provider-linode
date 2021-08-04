@@ -57,7 +57,7 @@ func TestAccLinodeDomain_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeDomainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeDomainConfigBasic(domainName),
+				Config: testAccCheckLinodeDomainConfigBasic(t, domainName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeDomainExists,
 					resource.TestCheckResourceAttr(resName, "domain", domainName),
@@ -95,14 +95,14 @@ func TestAccLinodeDomain_update(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeDomainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeDomainConfigBasic(domainName),
+				Config: testAccCheckLinodeDomainConfigBasic(t, domainName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeDomainExists,
 					resource.TestCheckResourceAttr(resName, "domain", domainName),
 				),
 			},
 			{
-				Config: testAccCheckLinodeDomainConfigUpdates(domainName),
+				Config: testAccCheckLinodeDomainConfigUpdates(t, domainName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeDomainExists,
 					resource.TestCheckResourceAttr(resName, "domain", fmt.Sprintf("renamed-%s", domainName)),
@@ -127,7 +127,7 @@ func TestAccLinodeDomain_roundedDomainSecs(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeDomainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeDomainConfigWithRoundedSec(domainName),
+				Config: testAccCheckLinodeDomainConfigWithRoundedSec(t, domainName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeDomainExists,
 					resource.TestCheckResourceAttr(resName, "domain", domainName),
@@ -138,7 +138,7 @@ func TestAccLinodeDomain_roundedDomainSecs(t *testing.T) {
 				),
 			},
 			{
-				Config:            testAccCheckLinodeDomainConfigWithRoundedSec(domainName),
+				Config:            testAccCheckLinodeDomainConfigWithRoundedSec(t, domainName),
 				ImportStateVerify: true,
 			},
 		},
@@ -209,7 +209,7 @@ func TestAccLinodeDomain_updateIPs(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeDomainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeDomainConfigIPs(domainName),
+				Config: testAccCheckLinodeDomainConfigIPs(t, domainName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeDomainExists,
 					resource.TestCheckResourceAttr(resName, "domain", domainName),
@@ -218,7 +218,7 @@ func TestAccLinodeDomain_updateIPs(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeDomainConfigIPsUpdate(domainName),
+				Config: testAccCheckLinodeDomainConfigIPsUpdate(t, domainName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeDomainExists,
 					resource.TestCheckResourceAttr(resName, "master_ips.#", "0"),
@@ -229,64 +229,26 @@ func TestAccLinodeDomain_updateIPs(t *testing.T) {
 	})
 }
 
-func testAccCheckLinodeDomainConfigBasic(domain string) string {
-	return fmt.Sprintf(`
-resource "linode_domain" "foobar" {
-	domain = "%s"
-	type = "master"
-	status = "active"
-	soa_email = "example@%s"
-	description = "tf-testing"
-	tags = ["tf_test"]
-}`, domain, domain)
+type DomainTemplateData struct {
+	Domain string
 }
 
-func testAccCheckLinodeDomainConfigUpdates(domain string) string {
-	return fmt.Sprintf(`
-resource "linode_domain" "foobar" {
-	domain = "renamed-%s"
-	type = "master"
-	status = "active"
-	soa_email = "example@%s"
-	description = "tf-testing"
-	tags = ["tf_test", "tf_test_2"]
-}`, domain, domain)
+func testAccCheckLinodeDomainConfigBasic(t *testing.T, domain string) string {
+	return testAccExecuteTemplate(t, "domain_basic", DomainTemplateData{Domain: domain})
 }
 
-func testAccCheckLinodeDomainConfigWithRoundedSec(domain string) string {
-	return fmt.Sprintf(`
-resource "linode_domain" "foobar" {
-	domain = "%s"
-	type = "master"
-	status = "active"
-	soa_email = "example@%[1]s"
-	description = "tf-testing"
-	ttl_sec = 299
-	refresh_sec = 600
-	retry_sec = 3601
-	expire_sec = 2419201
-	tags = ["tf_test"]
-}`, domain)
+func testAccCheckLinodeDomainConfigUpdates(t *testing.T, domain string) string {
+	return testAccExecuteTemplate(t, "domain_updates", DomainTemplateData{Domain: domain})
 }
 
-func testAccCheckLinodeDomainConfigIPs(domain string) string {
-	return fmt.Sprintf(`
-resource "linode_domain" "foobar" {
-	domain = "%s"
-	type = "master"
-	soa_email = "example@%s"
-	master_ips = ["12.34.56.78"]
-	axfr_ips = ["87.65.43.21"]
-}`, domain, domain)
+func testAccCheckLinodeDomainConfigWithRoundedSec(t *testing.T, domain string) string {
+	return testAccExecuteTemplate(t, "domain_rounded_sec", DomainTemplateData{Domain: domain})
 }
 
-func testAccCheckLinodeDomainConfigIPsUpdate(domain string) string {
-	return fmt.Sprintf(`
-resource "linode_domain" "foobar" {
-	domain = "%s"
-	type = "master"
-	soa_email = "example@%s"
-	master_ips = []
-	axfr_ips = []
-}`, domain, domain)
+func testAccCheckLinodeDomainConfigIPs(t *testing.T, domain string) string {
+	return testAccExecuteTemplate(t, "domain_ips", DomainTemplateData{Domain: domain})
+}
+
+func testAccCheckLinodeDomainConfigIPsUpdate(t *testing.T, domain string) string {
+	return testAccExecuteTemplate(t, "domain_ips_update", DomainTemplateData{Domain: domain})
 }

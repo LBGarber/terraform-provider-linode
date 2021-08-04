@@ -1,7 +1,6 @@
 package linode
 
 import (
-	"fmt"
 	"regexp"
 	"testing"
 
@@ -22,10 +21,10 @@ func TestAccDataSourceLinodeDomain_basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeDomainConfigBasic(domainName),
+				Config: testAccCheckLinodeDomainConfigBasic(t, domainName),
 			},
 			{
-				Config: testAccCheckLinodeDomainConfigBasic(domainName) + testDataSourceLinodeDomainBasic(domainName),
+				Config: testAccCheckLinodeDomainConfigBasic(t, domainName) + testDataSourceLinodeDomainBasic(t, domainName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "domain", domainName),
 					resource.TestCheckResourceAttr(resourceName, "type", "master"),
@@ -38,30 +37,25 @@ func TestAccDataSourceLinodeDomain_basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeDomainConfigBasic(domainName) + testDataSourceLinodeDomainByID(),
+				Config: testAccCheckLinodeDomainConfigBasic(t, domainName) + testDataSourceLinodeDomainByID(t),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "domain", domainName),
 				),
 				Destroy: true,
 			},
 			{
-				Config:      testDataSourceLinodeDomainBasic(domainName),
+				Config:      testDataSourceLinodeDomainBasic(t, domainName),
 				ExpectError: regexp.MustCompile(domainName + " was not found"),
 			},
 		},
 	})
 }
 
-func testDataSourceLinodeDomainBasic(domainName string) string {
-	return fmt.Sprintf(`
-data "linode_domain" "foobar" {
-	domain = "%s"
-}`, domainName)
+func testDataSourceLinodeDomainBasic(t *testing.T, domainName string) string {
+	return testAccExecuteTemplate(t, "data_domain_basic", DomainRecordTemplateData{
+		Domain: domainName})
 }
 
-func testDataSourceLinodeDomainByID() string {
-	return `
-data "linode_domain" "foobar" {
-	id = "${linode_domain.foobar.id}"
-}`
+func testDataSourceLinodeDomainByID(t *testing.T) string {
+	return testAccExecuteTemplate(t, "data_domain_id", nil)
 }

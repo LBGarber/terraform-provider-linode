@@ -4,7 +4,7 @@
 {{ template "firewall_instance_2" . }}
 
 resource "linode_firewall" "test" {
-    label    = "{{.label}}"
+    label    = "{{.Label}}"
     tags     = ["test", "test2"]
     disabled = true
 

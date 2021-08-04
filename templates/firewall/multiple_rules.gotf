@@ -3,7 +3,7 @@
 {{ template "firewall_instance_1" . }}
 
 resource "linode_firewall" "test" {
-    label = "{{.label}}"
+    label = "{{.Label}}"
     tags  = ["test"]
 
     inbound {

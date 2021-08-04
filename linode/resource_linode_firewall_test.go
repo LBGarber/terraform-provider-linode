@@ -453,38 +453,44 @@ func testAccCheckLinodeFirewallExists(name string, firewall *linodego.Firewall) 
 	}
 }
 
+type FirewallTemplateData struct {
+	Label        string
+	DevicePrefix string
+	PubKey       string
+}
+
 func testAccCheckLinodeFirewallBasic(t *testing.T, name, devicePrefix string) string {
-	return testAccExecuteTemplate(t, "firewall_basic", map[string]interface{}{
-		"label":        name,
-		"devicePrefix": devicePrefix,
-		"pubKey":       publicKeyMaterial,
+	return testAccExecuteTemplate(t, "firewall_basic", FirewallTemplateData{
+		Label:        name,
+		DevicePrefix: devicePrefix,
+		PubKey:       publicKeyMaterial,
 	})
 }
 
 func testAccCheckLinodeFirewallMinimum(t *testing.T, name string) string {
-	return testAccExecuteTemplate(t, "firewall_minimum", map[string]interface{}{
-		"label": name,
+	return testAccExecuteTemplate(t, "firewall_minimum", FirewallTemplateData{
+		Label: name,
 	})
 }
 
 func testAccCheckLinodeFirewallMultipleRules(t *testing.T, name, devicePrefix string) string {
-	return testAccExecuteTemplate(t, "firewall_multiple_rules", map[string]interface{}{
-		"label":        name,
-		"devicePrefix": devicePrefix,
-		"pubKey":       publicKeyMaterial,
+	return testAccExecuteTemplate(t, "firewall_multiple_rules", FirewallTemplateData{
+		Label:        name,
+		DevicePrefix: devicePrefix,
+		PubKey:       publicKeyMaterial,
 	})
 }
 
 func testAccCheckLinodeFirewallNoDevice(t *testing.T, name string) string {
-	return testAccExecuteTemplate(t, "firewall_nodevice", map[string]interface{}{
-		"label": name,
+	return testAccExecuteTemplate(t, "firewall_nodevice", FirewallTemplateData{
+		Label: name,
 	})
 }
 
 func testAccCheckLinodeFirewallUpdates(t *testing.T, name, devicePrefix string) string {
-	return testAccExecuteTemplate(t, "firewall_updates", map[string]interface{}{
-		"label":        name,
-		"devicePrefix": devicePrefix,
-		"pubKey":       publicKeyMaterial,
+	return testAccExecuteTemplate(t, "firewall_updates", FirewallTemplateData{
+		Label:        name,
+		DevicePrefix: devicePrefix,
+		PubKey:       publicKeyMaterial,
 	})
 }

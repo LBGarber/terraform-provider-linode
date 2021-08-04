@@ -1,0 +1,11 @@
+{{ define "data_domain_basic"}}
+data "linode_domain" "foobar" {
+    domain = "{{.Domain}}"
+}
+{{ end }}
+
+{{ define "data_domain_id"}}
+data "linode_domain" "foobar" {
+    id = "${linode_domain.foobar.id}"
+}
+{{ end }}

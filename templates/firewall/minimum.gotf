@@ -1,7 +1,7 @@
 {{ define "firewall_minimum" }}
 
 resource "linode_firewall" "test" {
-    label = "{{.label}}"
+    label = "{{.Label}}"
     tags  = ["test"]
 
     inbound {

@@ -58,12 +58,9 @@ func TestAccDataSourceLinodeFirewall_basic(t *testing.T) {
 }
 
 func testDataSourceLinodeFirewallBasic(t *testing.T, firewallName, devicePrefix string) string {
-	return testAccExecuteTemplate(t, "firewall_basic", map[string]interface{}{
-		"label": firewallName,
-		"inst1": map[string]interface{}{
-			"prefix": devicePrefix,
-			"name":   "one",
-			"pubKey": publicKeyMaterial,
-		},
+	return testAccExecuteTemplate(t, "data_firewall_basic", FirewallTemplateData{
+		Label:        firewallName,
+		DevicePrefix: devicePrefix,
+		PubKey:       publicKeyMaterial,
 	})
 }
