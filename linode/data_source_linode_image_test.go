@@ -1,7 +1,6 @@
 package linode
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -18,7 +17,7 @@ func TestAccDataSourceLinodeImage_basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testDataSourceLinodeImageBasic(imageID),
+				Config: testDataSourceLinodeImageBasic(t, imageID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "id", imageID),
 					resource.TestCheckResourceAttr(resourceName, "label", "Debian 8"),
@@ -33,9 +32,10 @@ func TestAccDataSourceLinodeImage_basic(t *testing.T) {
 	})
 }
 
-func testDataSourceLinodeImageBasic(imageID string) string {
-	return fmt.Sprintf(`
-data "linode_image" "foobar" {
-	id = "%s"
-}`, imageID)
+type DataImageTemplateData struct {
+	ID string
+}
+
+func testDataSourceLinodeImageBasic(t *testing.T, imageID string) string {
+	return testAccExecuteTemplate(t, "data_image", DataImageTemplateData{ID: imageID})
 }

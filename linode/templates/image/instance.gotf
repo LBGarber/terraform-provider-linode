@@ -1,0 +1,15 @@
+{{ define "image_instance" }}
+
+resource "linode_instance" "foobar" {
+    label = "{{.InstanceLabel}}"
+    group = "tf_test"
+    type = "g6-standard-1"
+    region = "us-east"
+    disk {
+        label = "disk"
+        size = 1000
+        filesystem = "ext4"
+    }
+}
+
+{{ end }}

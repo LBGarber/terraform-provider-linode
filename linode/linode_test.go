@@ -1,6 +1,7 @@
 package linode
 
 import (
+	"fmt"
 	"io/fs"
 	"log"
 	"path/filepath"
@@ -39,6 +40,8 @@ func init() {
 	if err != nil {
 		log.Fatalf("failed to find template files: %v", err)
 	}
+
+	fmt.Println("BRUH")
 
 	tfTemplates = template.New("tf-test")
 	if _, err := tfTemplates.ParseFiles(templateFiles...); err != nil {
