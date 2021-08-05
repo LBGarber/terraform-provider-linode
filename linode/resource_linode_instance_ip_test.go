@@ -1,7 +1,6 @@
 package linode
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -20,7 +19,7 @@ func TestAccLinodeInstanceIP_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: accTestWithProvider(testAccCheckLinodeInstanceIPBasic(name), map[string]interface{}{
+				Config: accTestWithProvider(testAccCheckLinodeInstanceIPBasic(t, name), map[string]interface{}{
 					providerKeySkipInstanceReadyPoll: true,
 				}),
 				Check: resource.ComposeTestCheckFunc(
@@ -37,27 +36,14 @@ func TestAccLinodeInstanceIP_basic(t *testing.T) {
 	})
 }
 
-func testAccCheckLinodeInstanceIPInstance(label string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "%[1]s" {
-	label = "%[1]s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-east"
-	disk {
-		label = "disk"
-		image = "linode/alpine3.11"
-		root_pass = "b4d_p4s5"
-		authorized_keys = ["%[2]s"]
-		size = 3000
-	}
-}`, label, publicKeyMaterial)
+type InstanceIPTemplateData struct {
+	InstanceLabel string
+	PubKey        string
 }
 
-func testAccCheckLinodeInstanceIPBasic(label string) string {
-	return testAccCheckLinodeInstanceIPInstance(label) + fmt.Sprintf(`
-resource "linode_instance_ip" "test" {
-	linode_id = linode_instance.%s.id
-	public = true
-}`, label)
+func testAccCheckLinodeInstanceIPBasic(t *testing.T, label string) string {
+	return testAccExecuteTemplate(t, "instance_ip_basic", InstanceIPTemplateData{
+		InstanceLabel: label,
+		PubKey:        publicKeyMaterial,
+	})
 }

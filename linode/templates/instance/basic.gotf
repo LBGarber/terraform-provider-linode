@@ -1,0 +1,43 @@
+{{ define "instance_basic" }}
+
+resource "linode_instance" "foobar" {
+    label = "{{.Label}}"
+    group = "tf_test"
+    {{ if .Tags }}tags = [{{.Tags}}]{{end}}
+    type = {{ if .Type }}"{{.Type}}"{{else}}"g6-nanode-1"{{end}}
+    image = {{ if .Image }}"{{.Image}}"{{else}}"linode/ubuntu18.04"{{end}}
+    region = {{ if .Region }}"{{.Region}}"{{else}}"us-east"{{end}}
+    {{ if .RootPass }}root_pass = "terraform-test"{{ end }}
+    swap_size = {{ if .SwapSize }}{{.SwapSize}}{{else}}256{{end}}
+    {{ if .PubKey }}authorized_keys = ["{{.PubKey}}"]{{ end }}
+    {{ if .BootConfigLabel }}boot_config_label = ["{{.BootConfigLabel}}"]{{ end }}
+
+    {{ range $i := .Interfaces }}
+    interface {
+        purpose = "{{$i.Purpose}}"
+        {{ if $i.Label }}label = "{{$i.Label}}"{{end}}
+    }
+    {{ end }}
+
+    {{ range $c := .Configs }}
+    config {
+        label = {{$c.Label}}
+        comments = {{$c.Comments}}
+        kernel = {{$c.Kernel}}
+        root_device = {{$c.RootDevice}}
+    }
+    {{ end }}
+
+    {{ range $d := .Disks }}
+    disk {
+        label = "{{$d.Label}}"
+        size = {{$d.Size}}
+        {{if $d.FileSystem}}filesystem = "{{$d.FileSystem}}"{{end}}
+        {{if $d.Image}}image = "{{$d.Image}}"{{end}}
+        {{if $d.RootPass}}root_pass = "{{$d.RootPass}}"{{end}}
+        {{if $d.PubKey}}authorized_keys = ["{{$d.PubKey}}"]{{end}}
+    }
+    {{ end }}
+}
+
+{{ end }}

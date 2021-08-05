@@ -61,7 +61,7 @@ func TestAccLinodeInstance_basic(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceBasic(instanceName, publicKeyMaterial),
+				Config: testAccCheckLinodeInstanceBasic(t, instanceName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -94,14 +94,14 @@ func TestAccLinodeInstance_watchdogDisabled(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithWatchdogDisabled(instanceName),
+				Config: testAccCheckLinodeInstanceWithWatchdogDisabled(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
 					resource.TestCheckResourceAttr(resName, "watchdog_enabled", "false"),
 				),
 			},
 			{
-				Config:   testAccCheckLinodeInstanceWithWatchdogDisabled(instanceName),
+				Config:   testAccCheckLinodeInstanceWithWatchdogDisabled(t, instanceName),
 				PlanOnly: true,
 			},
 		},
@@ -156,7 +156,7 @@ func TestAccLinodeInstance_interfaces(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithInterfaces(instanceName),
+				Config: testAccCheckLinodeInstanceWithInterfaces(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -172,7 +172,7 @@ func TestAccLinodeInstance_interfaces(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeInstanceWithInterfacesUpdate(instanceName),
+				Config: testAccCheckLinodeInstanceWithInterfacesUpdate(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resName, "config.0.interface.#", "2"),
 
@@ -183,7 +183,7 @@ func TestAccLinodeInstance_interfaces(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeInstanceWithInterfacesUpdateEmpty(instanceName),
+				Config: testAccCheckLinodeInstanceWithInterfacesUpdateEmpty(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resName, "config.0.interface.#", "0"),
 				),
@@ -211,7 +211,7 @@ func TestAccLinodeInstance_config(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithConfig(instanceName, publicKeyMaterial),
+				Config: testAccCheckLinodeInstanceWithConfig(t, instanceName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -249,7 +249,7 @@ func TestAccLinodeInstance_configPair(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithMultipleConfigs(instanceName, publicKeyMaterial),
+				Config: testAccCheckLinodeInstanceWithMultipleConfigs(t, instanceName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -286,7 +286,7 @@ func TestAccLinodeInstance_configInterfaces(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithConfigInterfaces(instanceName),
+				Config: testAccCheckLinodeInstanceWithConfigInterfaces(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -303,7 +303,7 @@ func TestAccLinodeInstance_configInterfaces(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeInstanceWithConfigInterfacesMultiple(instanceName),
+				Config: testAccCheckLinodeInstanceWithConfigInterfacesMultiple(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resName, "config.#", "2"),
 					resource.TestCheckResourceAttr(resName, "config.0.interface.#", "1"),
@@ -316,7 +316,7 @@ func TestAccLinodeInstance_configInterfaces(t *testing.T) {
 			},
 			{
 				PreConfig: testAccAssertReboot(t, false, &instance),
-				Config:    testAccCheckLinodeInstanceWithConfigInterfacesUpdate(instanceName),
+				Config:    testAccCheckLinodeInstanceWithConfigInterfacesUpdate(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resName, "config.#", "2"),
 					resource.TestCheckResourceAttr(resName, "config.0.interface.#", "2"),
@@ -326,7 +326,7 @@ func TestAccLinodeInstance_configInterfaces(t *testing.T) {
 			},
 			{
 				PreConfig: testAccAssertReboot(t, true, &instance),
-				Config:    testAccCheckLinodeInstanceWithConfigInterfacesUpdateEmpty(instanceName),
+				Config:    testAccCheckLinodeInstanceWithConfigInterfacesUpdateEmpty(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resName, "config.0.interface.#", "0"),
 				),
@@ -374,7 +374,7 @@ func TestAccLinodeInstance_disk(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithDiskRaw(instanceName),
+				Config: testAccCheckLinodeInstanceWithDiskRaw(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -414,7 +414,7 @@ func TestAccLinodeInstance_diskImage(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithDisk(instanceName, publicKeyMaterial),
+				Config: testAccCheckLinodeInstanceWithDisk(t, instanceName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -451,7 +451,7 @@ func TestAccLinodeInstance_diskPair(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceMultipleDisks(instanceName, publicKeyMaterial),
+				Config: testAccCheckLinodeInstanceMultipleDisks(t, instanceName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -688,7 +688,7 @@ func TestAccLinodeInstance_updateSimple(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceBasic(instanceName, publicKeyMaterial),
+				Config: testAccCheckLinodeInstanceBasic(t, instanceName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -719,7 +719,7 @@ func TestAccLinodeInstance_configUpdate(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithConfig(instanceName, publicKeyMaterial),
+				Config: testAccCheckLinodeInstanceWithConfig(t, instanceName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -784,7 +784,7 @@ func TestAccLinodeInstance_configPairUpdate(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithConfig(instanceName, publicKeyMaterial),
+				Config: testAccCheckLinodeInstanceWithConfig(t, instanceName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -798,7 +798,7 @@ func TestAccLinodeInstance_configPairUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeInstanceWithMultipleConfigs(instanceName, publicKeyMaterial),
+				Config: testAccCheckLinodeInstanceWithMultipleConfigs(t, instanceName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -825,7 +825,7 @@ func TestAccLinodeInstance_configPairUpdate(t *testing.T) {
 				ImportStateVerifyIgnore: []string{"boot_config_label", "status"},
 			},
 			{
-				Config: testAccCheckLinodeInstanceWithConfig(instanceName, publicKeyMaterial),
+				Config: testAccCheckLinodeInstanceWithConfig(t, instanceName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -845,7 +845,7 @@ func TestAccLinodeInstance_configPairUpdate(t *testing.T) {
 				ImportStateVerifyIgnore: []string{"boot_config_label", "status"},
 			},
 			{
-				Config: testAccCheckLinodeInstanceWithMultipleConfigsAllUpdated(instanceName, publicKeyMaterial),
+				Config: testAccCheckLinodeInstanceWithMultipleConfigsAllUpdated(t, instanceName, publicKeyMaterial),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "label", instanceName),
@@ -877,7 +877,7 @@ func TestAccLinodeInstance_upsizeWithoutDisk(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithType(instanceName, publicKeyMaterial, "g6-nanode-1"),
+				Config: testAccCheckLinodeInstanceWithType(t, instanceName, publicKeyMaterial, "g6-nanode-1"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "specs.0.disk", "25600"),
@@ -888,7 +888,7 @@ func TestAccLinodeInstance_upsizeWithoutDisk(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeInstanceWithType(instanceName, publicKeyMaterial, "g6-standard-1"),
+				Config: testAccCheckLinodeInstanceWithType(t, instanceName, publicKeyMaterial, "g6-standard-1"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "specs.0.disk", "51200"),
@@ -915,7 +915,7 @@ func TestAccLinodeInstance_diskRawResize(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Start off with a Linode 1024
 			{
-				Config: testAccCheckLinodeInstanceWithDiskRaw(instanceName),
+				Config: testAccCheckLinodeInstanceWithDiskRaw(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "specs.0.disk", "25600"),
@@ -930,7 +930,7 @@ func TestAccLinodeInstance_diskRawResize(t *testing.T) {
 			},
 			// Bump it to a 2048, and expand the disk
 			{
-				Config: testAccCheckLinodeInstanceWithDiskRawResizedAndExpanded(instanceName),
+				Config: testAccCheckLinodeInstanceWithDiskRawResizedAndExpanded(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "specs.0.disk", "51200"),
@@ -960,7 +960,7 @@ func TestAccLinodeInstance_tag(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Start off with a single tag
 			{
-				Config: testAccCheckLinodeInstanceWithTag(instanceName),
+				Config: testAccCheckLinodeInstanceWithTag(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "tags.#", "1"),
@@ -969,7 +969,7 @@ func TestAccLinodeInstance_tag(t *testing.T) {
 			},
 			// Apply updated tags
 			{
-				Config: testAccCheckLinodeInstanceWithUpdatedTag(instanceName),
+				Config: testAccCheckLinodeInstanceWithUpdatedTag(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "tags.#", "2"),
@@ -994,7 +994,7 @@ func TestAccLinodeInstance_diskRawDeleted(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Start off with a Linode 1024
 			{
-				Config: testAccCheckLinodeInstanceWithDiskRaw(instanceName),
+				Config: testAccCheckLinodeInstanceWithDiskRaw(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "specs.0.disk", "25600"),
@@ -1009,7 +1009,7 @@ func TestAccLinodeInstance_diskRawDeleted(t *testing.T) {
 			},
 			// Bump it to a 2048, and expand the disk
 			{
-				Config: testAccCheckLinodeInstanceWithDiskRawDeleted(instanceName),
+				Config: testAccCheckLinodeInstanceWithDiskRawDeleted(t, instanceName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					resource.TestCheckResourceAttr(resName, "specs.0.disk", "25600"),
@@ -1160,7 +1160,7 @@ func TestAccLinodeInstance_downsizeWithoutDisk(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithType(instanceName, publicKeyMaterial, "g6-standard-1"),
+				Config: testAccCheckLinodeInstanceWithType(t, instanceName, publicKeyMaterial, "g6-standard-1"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					testAccCheckComputeInstanceDisks(&instance,
@@ -1170,7 +1170,7 @@ func TestAccLinodeInstance_downsizeWithoutDisk(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeInstanceWithType(instanceName, publicKeyMaterial, "g6-nanode-1"),
+				Config: testAccCheckLinodeInstanceWithType(t, instanceName, publicKeyMaterial, "g6-nanode-1"),
 				ExpectError: regexp.MustCompile(
 					"Did you try to resize a linode with implicit, default disks to a smaller type?"),
 			},
@@ -1192,7 +1192,7 @@ func TestAccLinodeInstance_fullDiskSwapUpsize(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithFullDisk(instanceName, publicKeyMaterial, 256),
+				Config: testAccCheckLinodeInstanceWithFullDisk(t, instanceName, publicKeyMaterial, 256),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					testAccCheckComputeInstanceDisks(&instance,
@@ -1234,7 +1234,7 @@ func TestAccLinodeInstance_fullDiskSwapUpsize(t *testing.T) {
 						}
 					}
 				},
-				Config:      testAccCheckLinodeInstanceWithFullDisk(instanceName, publicKeyMaterial, 512),
+				Config:      testAccCheckLinodeInstanceWithFullDisk(t, instanceName, publicKeyMaterial, 512),
 				ExpectError: regexp.MustCompile("Error waiting for resize of Instance \\d+ Disk \\d+"),
 			},
 		},
@@ -1254,7 +1254,7 @@ func TestAccLinodeInstance_swapUpsize(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithSwapSize(instanceName, publicKeyMaterial, 256),
+				Config: testAccCheckLinodeInstanceWithSwapSize(t, instanceName, publicKeyMaterial, 256),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					testAccCheckComputeInstanceDisks(&instance,
@@ -1264,7 +1264,7 @@ func TestAccLinodeInstance_swapUpsize(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeInstanceWithSwapSize(instanceName, publicKeyMaterial, 512),
+				Config: testAccCheckLinodeInstanceWithSwapSize(t, instanceName, publicKeyMaterial, 512),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					testAccCheckComputeInstanceDisks(&instance,
@@ -1290,7 +1290,7 @@ func TestAccLinodeInstance_swapDownsize(t *testing.T) {
 		CheckDestroy: testAccCheckLinodeInstanceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLinodeInstanceWithSwapSize(instanceName, publicKeyMaterial, 512),
+				Config: testAccCheckLinodeInstanceWithSwapSize(t, instanceName, publicKeyMaterial, 512),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					testAccCheckComputeInstanceDisks(&instance,
@@ -1300,7 +1300,7 @@ func TestAccLinodeInstance_swapDownsize(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLinodeInstanceWithSwapSize(instanceName, publicKeyMaterial, 256),
+				Config: testAccCheckLinodeInstanceWithSwapSize(t, instanceName, publicKeyMaterial, 256),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLinodeInstanceExists(resName, &instance),
 					testAccCheckComputeInstanceDisks(&instance,
@@ -1879,579 +1879,321 @@ func testAccCheckComputeInstanceDisk(instance *linodego.Instance, label string, 
 	}
 }
 
-func testAccCheckLinodeInstanceBasic(instance string, pubkey string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	image = "linode/ubuntu18.04"
-	region = "us-east"
-	root_pass = "terraform-test"
-	swap_size = 256
-	authorized_keys = ["%s"]
-}`, instance, pubkey)
+type InstanceBasicTemplateData struct {
+	Label           string
+	PubKey          string
+	Tags            string
+	Type            string
+	Region          string
+	Image           string
+	RootPass        string
+	SwapSize        int
+	BootConfigLabel string
+	Interfaces      []InstanceInterfaceTemplateData
+	Configs         []InstanceConfigTemplateData
+	Disks           []InstanceDiskTemplateData
 }
 
-func testAccCheckLinodeInstanceWithBootImage(identifier, instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "%s" {
-	label     = "%s"
-	region    = "ca-central"
-	image     = "linode/alpine3.12"
-	type      = "g6-nanode-1"
-	root_pass = "terraform-test"
-}
-`, identifier, instance)
+type InstanceConfigTemplateData struct {
+	Label      string
+	Comments   string
+	Kernel     string
+	RootDevice string
 }
 
-func testAccCheckLinodeInstanceWithWatchdogDisabled(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label     = "%s"
-	region    = "ca-central"
-	image     = "linode/alpine3.12"
-	type      = "g6-nanode-1"
-	root_pass = "terraform-test"
-
-	watchdog_enabled = false
-}
-`, instance)
+type InstanceDiskTemplateData struct {
+	Label      string
+	Size       int
+	FileSystem string
+	Image      string
+	RootPass   string
+	PubKey     string
 }
 
-func testAccCheckLinodeInstanceWithType(instance string, pubkey string, typ string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "%s"
-	image = "linode/ubuntu18.04"
-	region = "us-east"
-	root_pass = "terraform-test"
-	swap_size = 256
-	authorized_keys = ["%s"]
-}`, instance, typ, pubkey)
+type InstanceInterfaceTemplateData struct {
+	Purpose string
+	Label   string
 }
 
-func testAccCheckLinodeInstanceWithSwapSize(instance string, pubkey string, swapSize int) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	image = "linode/ubuntu18.04"
-	region = "us-east"
-	root_pass = "terraform-test"
-	swap_size = %d
-	authorized_keys = ["%s"]
-}`, instance, swapSize, pubkey)
+func testAccCheckLinodeInstanceBasic(t *testing.T, instance string, pubkey string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label:  instance,
+		PubKey: pubkey,
+	})
 }
 
-func testAccCheckLinodeInstanceWithFullDisk(instance string, pubkey string, swapSize int) string {
+func testAccCheckLinodeInstanceWithWatchdogDisabled(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_watchdog_disabled",
+		InstanceBasicTemplateData{
+			Label: instance,
+		})
+}
+
+func testAccCheckLinodeInstanceWithType(t *testing.T, instance string, pubkey string, typ string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label:  instance,
+		PubKey: pubkey,
+		Type:   typ,
+	})
+}
+
+func testAccCheckLinodeInstanceWithSwapSize(t *testing.T, instance string, pubkey string, swapSize int) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label:    instance,
+		PubKey:   pubkey,
+		SwapSize: swapSize,
+	})
+}
+
+func testAccCheckLinodeInstanceWithFullDisk(t *testing.T, instance string, pubkey string, swapSize int) string {
 	ssName := acctest.RandomWithPrefix("tf_test")
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	image = "linode/ubuntu18.04"
-	region = "us-east"
-	root_pass = "terraform-test"
-	swap_size = %d
-	authorized_keys = ["%s"]
-	stackscript_id = linode_stackscript.flooddisk.id
+
+	return testAccExecuteTemplate(t, "instance_full_disk",
+		struct {
+			Instance InstanceBasicTemplateData
+			Label    string
+		}{
+			Label: ssName,
+			Instance: InstanceBasicTemplateData{
+				Label:    instance,
+				PubKey:   pubkey,
+				SwapSize: swapSize,
+			},
+		})
 }
 
-resource "linode_stackscript" "flooddisk" {
-	label = "%s"
-	script = <<EOF
-#!/usr/bin/env bash
-
-set -e
-
-get_disk_info() {
-	echo $(df /dev/sda --block-size=1 | tail -n-1)
+func testAccCheckLinodeInstanceWithConfig(t *testing.T, instance string, pubkey string) string {
+	return testAccExecuteTemplate(t, "instance_config", InstanceBasicTemplateData{
+		Label: instance,
+	})
 }
 
-# fills free space according to df after this df will report 100%% usage
-preallocate_free_space() {
-	local free_space=$(get_disk_info | awk '{print $4}')
-	fallocate -l "$free_space" blob
+func testAccCheckLinodeInstanceWithMultipleConfigs(t *testing.T, instance string, pubkey string) string {
+	return testAccExecuteTemplate(t, "instance_config_multiple", InstanceBasicTemplateData{
+		Label: instance,
+	})
 }
 
-# get minimum size disk can be and fill the difference of what is available
-fill_disk() {
-	local min_blocks=$(resize2fs -P /dev/sda | tail -1 | awk '{print $7}')
-	local block_size=$(blockdev --getbsz /dev/sda)
-	local min_bytes=$(($min_blocks * $block_size))
-	local total_bytes=$(get_disk_info | awk '{print $2}')
-	local blob_size=$(($total_bytes-$min_bytes))
-	dd if=/dev/zero of=blob1 bs=1024 count=$blob_size
+func testAccCheckLinodeInstanceWithInterfaces(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label:  instance,
+		Region: "us-southeast",
+		Image:  "linode/alpine3.13",
+		Interfaces: []InstanceInterfaceTemplateData{
+			{
+				Purpose: "vlan",
+				Label:   "tf-really-cool-vlan",
+			},
+		},
+	})
 }
 
-preallocate_free_space
-fill_disk
-EOF
-	description = "script to max out disk"
-	images = ["linode/ubuntu18.04"]
-}`, instance, swapSize, pubkey, ssName)
+func testAccCheckLinodeInstanceWithInterfacesUpdate(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label:  instance,
+		Region: "us-southeast",
+		Image:  "linode/alpine3.13",
+		Interfaces: []InstanceInterfaceTemplateData{
+			{
+				Purpose: "public",
+			},
+			{
+				Purpose: "vlan",
+				Label:   "tf-really-cool-vlan",
+			},
+		},
+	})
 }
 
-func testAccCheckLinodeInstanceWithConfig(instance string, pubkey string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-east"
-	alerts {
-		cpu = 60
-	}
-	config {
-		label = "config"
-		kernel = "linode/latest-64bit"
-		root_device = "/dev/sda"
-		helpers {
-			network = true
-		}
-	}
-
-	boot_config_label = "config"
-}`, instance)
+func testAccCheckLinodeInstanceWithInterfacesUpdateEmpty(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label:  instance,
+		Region: "us-southeast",
+		Image:  "linode/alpine3.13",
+	})
 }
 
-func testAccCheckLinodeInstanceWithMultipleConfigs(instance string, pubkey string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-east"
-	config {
-		label = "configa"
-		kernel = "linode/latest-64bit"
-		root_device = "/dev/sda"
-	}
-	config {
-		label = "configb"
-		kernel = "linode/latest-32bit"
-		root_device = "/dev/sda"
-	}
-
-	boot_config_label = "configa"
-}`, instance)
+func testAccCheckLinodeInstanceWithConfigInterfaces(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_config_interface", InstanceBasicTemplateData{
+		Label: instance,
+		Interfaces: []InstanceInterfaceTemplateData{
+			{
+				Purpose: "vlan",
+				Label:   "tf-really-cool-vlan",
+			},
+		},
+	})
 }
 
-func testAccCheckLinodeInstanceWithInterfaces(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-southeast"
-	image = "linode/alpine3.13"
-
-	interface {
-		purpose = "vlan"
-		label = "tf-really-cool-vlan"
-	}
-}`, instance)
+type ConfigInterfacesMultipleTemplateData struct {
+	Label       string
+	Interfaces1 []InstanceInterfaceTemplateData
+	Interfaces2 []InstanceInterfaceTemplateData
 }
 
-func testAccCheckLinodeInstanceWithInterfacesUpdate(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-southeast"
-	image = "linode/alpine3.13"
-
-	interface {
-		purpose = "public"
-	}
-
-	interface {
-		purpose = "vlan"
-		label = "tf-really-cool-vlan"
-	}
-}`, instance)
+func testAccCheckLinodeInstanceWithConfigInterfacesMultiple(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_config_interface_multiple",
+		ConfigInterfacesMultipleTemplateData{
+			Label: instance,
+			Interfaces1: []InstanceInterfaceTemplateData{
+				{
+					Purpose: "vlan",
+					Label:   "tf-really-cool-vlan",
+				},
+			},
+			Interfaces2: []InstanceInterfaceTemplateData{
+				{
+					Purpose: "public",
+				},
+				{
+					Purpose: "vlan",
+					Label:   "tf-really-cool-vlan",
+				},
+			},
+		})
 }
 
-func testAccCheckLinodeInstanceWithInterfacesUpdateEmpty(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-southeast"
-	image = "linode/alpine3.13"
-}`, instance)
+func testAccCheckLinodeInstanceWithConfigInterfacesUpdate(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_config_interface_multiple",
+		ConfigInterfacesMultipleTemplateData{
+			Label: instance,
+			Interfaces1: []InstanceInterfaceTemplateData{
+				{
+					Purpose: "public",
+				},
+				{
+					Purpose: "vlan",
+					Label:   "tf-really-cool-vlan",
+				},
+			},
+			Interfaces2: []InstanceInterfaceTemplateData{
+				{
+					Purpose: "public",
+				},
+				{
+					Purpose: "vlan",
+					Label:   "tf-really-cool-vlan",
+				},
+			},
+		})
 }
 
-func testAccCheckLinodeInstanceWithConfigInterfaces(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-southeast"
-	alerts {
-		cpu = 60
-	}
-
-	config {
-		label = "config"
-		kernel = "linode/latest-64bit"
-		root_device = "/dev/sda"
-		helpers {
-			network = true
-		}
-
-		interface {
-			purpose = "vlan"
-			label = "tf-really-cool-vlan"
-		}
-
-        devices {
-	        sda {
-                disk_label = "boot"
-            }
-        }
-	}
-
-	disk {
-		label = "boot"
-		size = 3000
-		image  = "linode/ubuntu18.04"
-		root_pass = "terr4form-test"
-	}
-
-	boot_config_label = "config"
-}`, instance)
+func testAccCheckLinodeInstanceWithConfigInterfacesUpdateEmpty(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_config_interface", InstanceBasicTemplateData{
+		Label: instance,
+	})
 }
 
-func testAccCheckLinodeInstanceWithConfigInterfacesMultiple(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-southeast"
-	alerts {
-		cpu = 60
-	}
-	config {
-		label = "config"
-		kernel = "linode/latest-64bit"
-		root_device = "/dev/sda"
-		helpers {
-			network = true
-		}
-
-		interface {
-			purpose = "vlan"
-			label = "tf-really-cool-vlan"
-		}
-
-        devices {
-	        sda {
-                disk_label = "boot"
-            }
-        }
-	}
-
-	config {
-		label = "config2"
-		kernel = "linode/latest-64bit"
-		root_device = "/dev/sda"
-		helpers {
-			network = true
-		}
-
-		interface {
-			purpose = "public"
-		}
-
-		interface {
-			purpose = "vlan"
-			label = "tf-really-cool-vlan"
-		}
-                devices {
-                    sda {
-                        disk_label = "boot"
-                    }
-                }
-	}
-
-        disk {
-            label = "boot"
-            size = 3000
-            image  = "linode/ubuntu18.04"
-            root_pass = "terr4form-test"
-        }
-
-	boot_config_label = "config"
-}`, instance)
+func testAccCheckLinodeInstanceWithMultipleConfigsAllUpdated(t *testing.T, instance string, pubkey string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label:           instance,
+		BootConfigLabel: "configa",
+		Configs: []InstanceConfigTemplateData{
+			{
+				Label:      "configa",
+				Comments:   "configa",
+				Kernel:     "linode/latest-32bit",
+				RootDevice: "/dev/sda",
+			},
+			{
+				Label:      "configb",
+				Comments:   "configb",
+				Kernel:     "linode/latest-32bit",
+				RootDevice: "/dev/sda",
+			},
+			{
+				Label:      "configc",
+				Comments:   "configc",
+				Kernel:     "linode/latest-32bit",
+				RootDevice: "/dev/sda",
+			},
+		},
+	})
 }
 
-func testAccCheckLinodeInstanceWithConfigInterfacesUpdate(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-southeast"
-	alerts {
-		cpu = 60
-	}
-	config {
-		label = "config"
-		kernel = "linode/latest-64bit"
-		root_device = "/dev/sda"
-		helpers {
-			network = true
-		}
-
-		interface {
-			purpose = "public"
-		}
-
-		interface {
-			purpose = "vlan"
-			label = "tf-really-cool-vlan"
-		}
-                devices {
-                    sda {
-                        disk_label = "boot"
-                    }
-                }
-	}
-
-	config {
-		label = "config2"
-		kernel = "linode/latest-64bit"
-		root_device = "/dev/sda"
-		helpers {
-			network = true
-		}
-
-		interface {
-			purpose = "public"
-		}
-
-		interface {
-			purpose = "vlan"
-			label = "tf-really-cool-vlan"
-		}
-                devices {
-                    sda {
-                        disk_label = "boot"
-                    }
-                }
-	}
-
-        disk {
-            label = "boot"
-            size = 3000
-            image  = "linode/ubuntu18.04"
-            root_pass = "terr4form-test"
-        }
-
-	boot_config_label = "config"
-}`, instance)
+func testAccCheckLinodeInstanceWithDiskRaw(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label: instance,
+		Disks: []InstanceDiskTemplateData{
+			{
+				Label: "disk",
+				Size:  3000,
+			},
+		},
+	})
 }
 
-func testAccCheckLinodeInstanceWithConfigInterfacesUpdateEmpty(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-southeast"
-	alerts {
-		cpu = 60
-	}
-	config {
-		label = "config"
-		kernel = "linode/latest-64bit"
-		root_device = "/dev/sda"
-		helpers {
-			network = true
-		}
-                devices {
-                    sda {
-                        disk_label = "boot"
-                    }
-                }
-	}
-
-        disk {
-            label = "boot"
-            size = 3000
-            image  = "linode/ubuntu18.04"
-            root_pass = "terr4form-test"
-        }
-
-	boot_config_label = "config"
-}`, instance)
+func testAccCheckLinodeInstanceWithDiskRawDeleted(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label: instance,
+	})
 }
 
-func testAccCheckLinodeInstanceWithMultipleConfigsReverseOrder(instance string, pubkey string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-east"
-	config {
-		label = "configa"
-		kernel = "linode/latest-64bit"
-		root_device = "/dev/sda"
-	}
-	config {
-		label = "configb"
-		kernel = "linode/latest-32bit"
-		root_device = "/dev/sda"
-	}
-
-	boot_config_label = "configa"
-}`, instance)
+func testAccCheckLinodeInstanceWithTag(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label: instance,
+		Tags:  `"tf_test"`,
+	})
 }
 
-func testAccCheckLinodeInstanceWithMultipleConfigsAllUpdated(instance string, pubkey string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-east"
-	config {
-		label = "configa"
-		comments = "configa"
-		kernel = "linode/latest-32bit"
-		root_device = "/dev/sda"
-	}
-	config {
-		label = "configb"
-		comments = "configb"
-		kernel = "linode/latest-64bit"
-		root_device = "/dev/sda"
-	}
-	config {
-		label = "configc"
-		comments = "configc"
-		kernel = "linode/latest-64bit"
-		root_device = "/dev/sda"
-	}
-
-	boot_config_label = "configa"
-}`, instance)
+func testAccCheckLinodeInstanceWithUpdatedTag(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label: instance,
+		Tags:  `"tf_test", "tf_test_2"'`,
+		Configs: []InstanceConfigTemplateData{
+			{
+				Label:  "config",
+				Kernel: "linode/latest-64bit",
+			},
+		},
+	})
 }
 
-func testAccCheckLinodeInstanceWithDiskRaw(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-east"
-	disk {
-		label = "disk"
-		size = 3000
-	}
-}`, instance)
+func testAccCheckLinodeInstanceWithDiskRawResizedAndExpanded(t *testing.T, instance string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label: instance,
+		Disks: []InstanceDiskTemplateData{
+			{
+				Label: "disk",
+				Size:  6000,
+			},
+		},
+	})
 }
 
-func testAccCheckLinodeInstanceWithDiskRawDeleted(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-east"
-}`, instance)
+func testAccCheckLinodeInstanceWithDisk(t *testing.T, instance string, pubkey string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label: instance,
+		Disks: []InstanceDiskTemplateData{
+			{
+				Label:    "disk",
+				Size:     3000,
+				Image:    "linode/ubuntu18.04",
+				RootPass: "b4d_p4s5",
+				PubKey:   pubkey,
+			},
+		},
+	})
 }
 
-func testAccCheckLinodeInstanceWithTag(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	tags = ["tf_test"]
-	type = "g6-nanode-1"
-	region = "us-east"
-	config {
-		label = "config"
-		kernel = "linode/latest-64bit"
-	}
-}`, instance)
-}
-
-func testAccCheckLinodeInstanceWithUpdatedTag(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	tags = ["tf_test", "tf_test_2"]
-	type = "g6-nanode-1"
-	region = "us-east"
-	config {
-		label = "config"
-		kernel = "linode/latest-64bit"
-	}
-}`, instance)
-}
-
-func testAccCheckLinodeInstanceWithDiskRawResizedAndExpanded(instance string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-standard-1"
-	region = "us-east"
-	disk {
-		label = "disk"
-		size = 6000
-	}
-}`, instance)
-}
-
-func testAccCheckLinodeInstanceWithDisk(instance string, pubkey string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-east"
-	disk {
-		label = "disk"
-		image = "linode/ubuntu18.04"
-		root_pass = "b4d_p4s5"
-		authorized_keys = ["%s"]
-		size = 3000
-	}
-}`, instance, pubkey)
-}
-
-func testAccCheckLinodeInstanceMultipleDisks(instance string, pubkey string) string {
-	return fmt.Sprintf(`
-resource "linode_instance" "foobar" {
-	label = "%s"
-	group = "tf_test"
-	type = "g6-nanode-1"
-	region = "us-east"
-	disk {
-		label = "diska"
-		image = "linode/ubuntu18.04"
-		root_pass = "b4d_p4s5"
-		authorized_keys = ["%s"]
-		size = 3000
-	}
-	disk {
-		label = "diskb"
-		filesystem = "swap"
-		size = 512
-	}
-}`, instance, pubkey)
+func testAccCheckLinodeInstanceMultipleDisks(t *testing.T, instance string, pubkey string) string {
+	return testAccExecuteTemplate(t, "instance_basic", InstanceBasicTemplateData{
+		Label: instance,
+		Disks: []InstanceDiskTemplateData{
+			{
+				Label:    "diska",
+				Size:     3000,
+				Image:    "linode/ubuntu18.04",
+				RootPass: "b4d_p4s5",
+				PubKey:   pubkey,
+			},
+			{
+				Label:      "diskb",
+				FileSystem: "swap",
+				Size:       512,
+			},
+		},
+	})
 }
 
 func testAccCheckLinodeInstanceWithDiskAndConfig(instance string, pubkey string) string {
