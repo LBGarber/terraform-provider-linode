@@ -106,6 +106,30 @@ func TestReconcileLKEClusterPoolSpecs(t *testing.T) {
 				126: {Count: 9}, // +5
 			},
 		},
+		{
+			name: "scaler",
+			provisionedPools: []linodego.LKEClusterPool{
+				{ID: 123, Type: "g6-standard-3", Count: 3},
+			},
+			specs: []linodeLKEClusterPoolSpec{
+				{Type: "g6-standard-3", Count: 3, AutoScalerEnabled: true, AutoScalerMin: 3, AutoScalerMax: 7},
+			},
+			expectedToUpdate: map[int]linodego.LKEClusterPoolUpdateOptions{
+				123: {Count: 3, Autoscaler: &linodego.LKEClusterPoolAutoscaler{Enabled: true, Min: 3, Max: 7}}, // -1
+			},
+		},
+		{
+			name: "scaler drop",
+			provisionedPools: []linodego.LKEClusterPool{
+				{ID: 123, Type: "g6-standard-3", Count: 3, Autoscaler: linodego.LKEClusterPoolAutoscaler{Enabled: true, Min: 3, Max: 7}},
+			},
+			specs: []linodeLKEClusterPoolSpec{
+				{Type: "g6-standard-3", Count: 3, AutoScalerEnabled: false},
+			},
+			expectedToUpdate: map[int]linodego.LKEClusterPoolUpdateOptions{
+				123: {Count: 3, Autoscaler: &linodego.LKEClusterPoolAutoscaler{Enabled: false, Min: 3, Max: 3}}, // -1
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			updates := reconcileLKEClusterPoolSpecs(tc.specs, tc.provisionedPools)
@@ -222,6 +246,7 @@ func TestAccLinodeLKECluster_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.type", "g6-standard-2"),
 					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.count", "3"),
 					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.nodes.#", "3"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.autoscaler.#", "0"),
 					resource.TestCheckResourceAttrSet(testLKEClusterResName, "id"),
 					resource.TestCheckResourceAttrSet(testLKEClusterResName, "pool.0.id"),
 					resource.TestCheckResourceAttrSet(testLKEClusterResName, "kubeconfig"),
@@ -377,6 +402,75 @@ func TestAccLinodeLKECluster_removeUnmanagedPool(t *testing.T) {
 	})
 }
 
+func TestAccLinodeLKECluster_autoScaler(t *testing.T) {
+	t.Parallel()
+
+	clusterName := acctest.RandomWithPrefix("tf_test")
+	//newClusterName := acctest.RandomWithPrefix("tf_test")
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckLinodeLKEClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckLinodeLKEClusterBasic(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testLKEClusterResName, "label", clusterName),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.#", "1"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.count", "3"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.autoscaler.#", "0"),
+				),
+			},
+			{
+				Config: testAccCheckLinodeLKEClusterAutoScaler(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testLKEClusterResName, "label", clusterName),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.#", "1"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.count", "3"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.autoscaler.#", "1"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.autoscaler.0.min", "1"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.autoscaler.0.max", "5"),
+				),
+			},
+			{
+				Config: testAccCheckLinodeLKEClusterAutoScalerUpdates(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testLKEClusterResName, "label", clusterName),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.#", "1"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.count", "3"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.autoscaler.#", "1"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.autoscaler.0.min", "1"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.autoscaler.0.max", "8"),
+				),
+			},
+			{
+				Config: testAccCheckLinodeLKEClusterAutoScalerManyPools(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testLKEClusterResName, "label", clusterName),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.#", "2"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.count", "5"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.autoscaler.#", "1"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.autoscaler.0.min", "3"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.autoscaler.0.max", "8"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.1.count", "3"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.1.autoscaler.#", "1"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.1.autoscaler.0.min", "1"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.1.autoscaler.0.max", "8"),
+				),
+			},
+			{
+				Config: testAccCheckLinodeLKEClusterBasic(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testLKEClusterResName, "label", clusterName),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.#", "1"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.count", "3"),
+					resource.TestCheckResourceAttr(testLKEClusterResName, "pool.0.autoscaler.#", "0"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckLinodeLKEClusterBasic(name string) string {
 	return fmt.Sprintf(`
 resource "linode_lke_cluster" "test" {
@@ -458,6 +552,76 @@ resource "linode_lke_cluster" "test" {
 	pool {
 		type = "g6-standard-4"
 		count = 2
+	}
+}`, name)
+}
+
+func testAccCheckLinodeLKEClusterAutoScaler(name string) string {
+	return fmt.Sprintf(`
+resource "linode_lke_cluster" "test" {
+	label       = "%s"
+	region      = "us-central"
+	k8s_version = "1.20"
+	tags        = ["test"]
+
+	pool {
+		autoscaler {
+			min = 1
+			max = 5
+		}
+
+		type  = "g6-standard-2"
+		count = 3
+	}
+}`, name)
+}
+
+func testAccCheckLinodeLKEClusterAutoScalerUpdates(name string) string {
+	return fmt.Sprintf(`
+resource "linode_lke_cluster" "test" {
+	label       = "%s"
+	region      = "us-central"
+	k8s_version = "1.20"
+	tags        = ["test"]
+
+	pool {
+		autoscaler {
+			min = 1
+			max = 8
+		}
+
+		type  = "g6-standard-2"
+		count = 3
+	}
+}`, name)
+}
+
+func testAccCheckLinodeLKEClusterAutoScalerManyPools(name string) string {
+	return fmt.Sprintf(`
+resource "linode_lke_cluster" "test" {
+	label       = "%s"
+	region      = "us-central"
+	k8s_version = "1.20"
+	tags        = ["test"]
+
+	pool {
+		autoscaler {
+			min = 3
+			max = 8
+		}
+
+		type  = "g6-standard-4"
+		count = 5
+	}
+
+	pool {
+		autoscaler {
+			min = 1
+			max = 8
+		}
+
+		type  = "g6-standard-2"
+		count = 3
 	}
 }`, name)
 }

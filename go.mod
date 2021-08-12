@@ -9,4 +9,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 )
 
+replace github.com/linode/linodego => /home/lgarber/GolandProjects/linodego
+replace github.com/linode/linodego/k8s => /home/lgarber/GolandProjects/linodego/k8s
+
 go 1.16

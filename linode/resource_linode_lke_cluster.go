@@ -123,6 +123,27 @@ func resourceLinodeLKECluster() *schema.Resource {
 							Computed:    true,
 							Description: "The nodes in the node pool.",
 						},
+						"autoscaler": {
+							Type:     schema.TypeList,
+							MaxItems: 1,
+							Optional: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"min": {
+										Type:        schema.TypeInt,
+										Description: "The minimum number of nodes to autoscale to.",
+										Required:    true,
+									},
+									"max": {
+										Type:        schema.TypeInt,
+										Description: "The maximum number of nodes to autoscale to.",
+										Required:    true,
+									},
+								},
+							},
+							Description: "When specified, the number of nodes autoscales within " +
+								"the defined minimum and maximum values.",
+						},
 					},
 				},
 				MinItems:    1,
@@ -193,9 +214,11 @@ func resourceLinodeLKEClusterCreate(ctx context.Context, d *schema.ResourceData,
 
 	for _, nodePool := range d.Get("pool").([]interface{}) {
 		poolSpec := nodePool.(map[string]interface{})
+
 		createOpts.NodePools = append(createOpts.NodePools, linodego.LKEClusterPoolCreateOptions{
-			Type:  poolSpec["type"].(string),
-			Count: poolSpec["count"].(int),
+			Type:       poolSpec["type"].(string),
+			Count:      poolSpec["count"].(int),
+			Autoscaler: expandLinodeLKEClusterAutoscalerFromPool(poolSpec),
 		})
 	}
 
@@ -218,6 +241,7 @@ func resourceLinodeLKEClusterCreate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceLinodeLKEClusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+
 	providerMeta := meta.(*ProviderMeta)
 	client := providerMeta.Client
 	id, err := strconv.Atoi(d.Id())
@@ -293,8 +317,11 @@ func resourceLinodeLKEClusterDelete(ctx context.Context, d *schema.ResourceData,
 }
 
 type linodeLKEClusterPoolSpec struct {
-	Type  string
-	Count int
+	Type              string
+	Count             int
+	AutoScalerEnabled bool
+	AutoScalerMin     int
+	AutoScalerMax     int
 }
 
 type linodelkeClusterPoolUpdates struct {
@@ -316,9 +343,21 @@ func (r clusterPoolAssignRequest) Diff() int {
 func expandLinodeLKEClusterPoolSpecs(pool []interface{}) (poolSpecs []linodeLKEClusterPoolSpec) {
 	for _, spec := range pool {
 		specMap := spec.(map[string]interface{})
+		autoscaler := expandLinodeLKEClusterAutoscalerFromPool(specMap)
+		if autoscaler == nil {
+			autoscaler = &linodego.LKEClusterPoolAutoscaler{
+				Enabled: false,
+				Min:     specMap["count"].(int),
+				Max:     specMap["count"].(int),
+			}
+		}
+
 		poolSpecs = append(poolSpecs, linodeLKEClusterPoolSpec{
-			Type:  specMap["type"].(string),
-			Count: specMap["count"].(int),
+			Type:              specMap["type"].(string),
+			Count:             specMap["count"].(int),
+			AutoScalerEnabled: autoscaler.Enabled,
+			AutoScalerMin:     autoscaler.Min,
+			AutoScalerMax:     autoscaler.Max,
 		})
 	}
 	return
@@ -328,8 +367,11 @@ func getLKEClusterPoolProvisionedSpecs(pools []linodego.LKEClusterPool) map[lino
 	provisioned := make(map[linodeLKEClusterPoolSpec]map[int]struct{})
 	for _, pool := range pools {
 		spec := linodeLKEClusterPoolSpec{
-			Type:  pool.Type,
-			Count: pool.Count,
+			Type:              pool.Type,
+			Count:             pool.Count,
+			AutoScalerEnabled: pool.Autoscaler.Enabled,
+			AutoScalerMin:     pool.Autoscaler.Min,
+			AutoScalerMax:     pool.Autoscaler.Max,
 		}
 		if _, ok := provisioned[spec]; !ok {
 			provisioned[spec] = make(map[int]struct{})
@@ -399,8 +441,28 @@ func reconcileLKEClusterPoolSpecs(
 			continue
 		}
 
+		var newAutoscaler *linodego.LKEClusterPoolAutoscaler
+
+		if request.Spec.AutoScalerEnabled {
+			newAutoscaler = &linodego.LKEClusterPoolAutoscaler{
+				Enabled: request.Spec.AutoScalerEnabled,
+				Min:     request.Spec.AutoScalerMin,
+				Max:     request.Spec.AutoScalerMax,
+			}
+		}
+
+		// Only disable if already enabled
+		if !request.Spec.AutoScalerEnabled && request.State.AutoScalerEnabled {
+			newAutoscaler = &linodego.LKEClusterPoolAutoscaler{
+				Enabled: request.Spec.AutoScalerEnabled,
+				Min:     request.Spec.Count,
+				Max:     request.Spec.Count,
+			}
+		}
+
 		updates.ToUpdate[request.PoolID] = linodego.LKEClusterPoolUpdateOptions{
-			Count: request.Spec.Count,
+			Count:      request.Spec.Count,
+			Autoscaler: newAutoscaler,
 		}
 
 		assignedPools[request.PoolID] = struct{}{}
@@ -413,9 +475,21 @@ func reconcileLKEClusterPoolSpecs(
 
 	for i := range poolSpecsToAssign {
 		poolSpec := poolSpecs[i]
+
+		var newAutoscaler *linodego.LKEClusterPoolAutoscaler
+
+		if poolSpec.AutoScalerEnabled {
+			newAutoscaler = &linodego.LKEClusterPoolAutoscaler{
+				Enabled: poolSpec.AutoScalerEnabled,
+				Min:     poolSpec.AutoScalerMin,
+				Max:     poolSpec.AutoScalerMax,
+			}
+		}
+
 		updates.ToCreate = append(updates.ToCreate, linodego.LKEClusterPoolCreateOptions{
-			Count: poolSpec.Count,
-			Type:  poolSpec.Type,
+			Count:      poolSpec.Count,
+			Type:       poolSpec.Type,
+			Autoscaler: newAutoscaler,
 		})
 	}
 
@@ -593,11 +667,23 @@ func flattenLinodeLKEClusterPools(pools []linodego.LKEClusterPool) []map[string]
 			}
 		}
 
+		var autoscaler []map[string]interface{}
+
+		if pool.Autoscaler.Enabled {
+			autoscaler = []map[string]interface{}{
+				{
+					"min": pool.Autoscaler.Min,
+					"max": pool.Autoscaler.Max,
+				},
+			}
+		}
+
 		flattened[i] = map[string]interface{}{
-			"id":    pool.ID,
-			"count": pool.Count,
-			"type":  pool.Type,
-			"nodes": nodes,
+			"id":         pool.ID,
+			"count":      pool.Count,
+			"type":       pool.Type,
+			"nodes":      nodes,
+			"autoscaler": autoscaler,
 		}
 	}
 	return flattened
@@ -609,6 +695,22 @@ func flattenLinodeLKEClusterAPIEndpoints(apiEndpoints []linodego.LKEClusterAPIEn
 		flattened[i] = endpoint.Endpoint
 	}
 	return flattened
+}
+
+func expandLinodeLKEClusterAutoscalerFromPool(pool map[string]interface{}) *linodego.LKEClusterPoolAutoscaler {
+	scalersSpec, ok := pool["autoscaler"].([]interface{})
+
+	// Return nil if the autoscaler isn't defined
+	if !ok || len(scalersSpec) < 1 {
+		return nil
+	}
+
+	scalerSpec := scalersSpec[0].(map[string]interface{})
+	return &linodego.LKEClusterPoolAutoscaler{
+		Enabled: true,
+		Min:     scalerSpec["min"].(int),
+		Max:     scalerSpec["max"].(int),
+	}
 }
 
 // This cannot currently be handled efficiently by a DiffSuppressFunc

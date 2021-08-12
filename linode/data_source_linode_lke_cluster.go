@@ -101,6 +101,26 @@ func dataSourceLinodeLKECluster() *schema.Resource {
 							Computed:    true,
 							Description: "The nodes in the node pool.",
 						},
+						"autoscaler": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"min": {
+										Type:        schema.TypeInt,
+										Description: "The minimum number of nodes to autoscale to.",
+										Required:    true,
+									},
+									"max": {
+										Type:        schema.TypeInt,
+										Description: "The maximum number of nodes to autoscale to.",
+										Required:    true,
+									},
+								},
+							},
+							Description: "When specified, the number of nodes autoscales within " +
+								"the defined minimum and maximum values.",
+						},
 					},
 				},
 				Computed:    true,
