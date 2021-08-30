@@ -3,6 +3,7 @@ package balancerconfig_test
 import (
 	"context"
 	"fmt"
+	"google.golang.org/grpc/balancer"
 	"strconv"
 	"testing"
 
@@ -333,6 +334,10 @@ func resourceImportStateID(s *terraform.State) (string, error) {
 	}
 
 	return "", fmt.Errorf("Error finding linode_nodebalancer_config")
+}
+
+type TemplateData struct {
+	NodeBalancer balancer.TemplateData
 }
 
 func resourceBalancerConfig(nodebalancer string) string {

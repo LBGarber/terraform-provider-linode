@@ -1,0 +1,19 @@
+{{ define "object_key_limited" }}
+
+{{ template "object_bucket_basic" . }}
+
+resource "linode_object_storage_key" "foobar" {
+    label = "{{.Label}}_key"
+    bucket_access {
+        bucket_name = "{{.Label}}-bucket"
+        cluster = "us-east-1"
+        permissions = "read_only"
+    }
+    bucket_access {
+        bucket_name = linode_object_storage_bucket.foobar.label
+        cluster = linode_object_storage_bucket.foobar.cluster
+        permissions = "read_write"
+    }
+}
+
+{{ end }}
