@@ -3,7 +3,7 @@ package balancerconfig_test
 import (
 	"context"
 	"fmt"
-	"google.golang.org/grpc/balancer"
+	"github.com/linode/terraform-provider-linode/linode/balancerconfig/tmpl"
 	"strconv"
 	"testing"
 
@@ -112,7 +112,7 @@ func TestAccResourceNodeBalancerConfig_basic(t *testing.T) {
 
 	resName := "linode_nodebalancer_config.foofig"
 	nodebalancerName := acctest.RandomWithPrefix("tf_test")
-	config := resourceConfigBasic(nodebalancerName)
+	config := tmpl.Basic(t, nodebalancerName)
 	resource.Test(t, resource.TestCase{
 		PreventPostDestroyRefresh: true,
 		PreCheck:                  func() { acceptance.TestAccPreCheck(t) },
@@ -159,7 +159,7 @@ func TestAccResourceNodeBalancerConfig_ssl(t *testing.T) {
 
 	resName := "linode_nodebalancer_config.foofig"
 	nodebalancerName := acctest.RandomWithPrefix("tf_test")
-	config := resourceConfigSSL(nodebalancerName)
+	config := tmpl.SSL(t, nodebalancerName, testCertifcate, testPrivateKey)
 	resource.Test(t, resource.TestCase{
 		PreventPostDestroyRefresh: true,
 		PreCheck:                  func() { acceptance.TestAccPreCheck(t) },
@@ -199,7 +199,7 @@ func TestAccResourceNodeBalancerConfig_update(t *testing.T) {
 		CheckDestroy: checkNodeBalancerConfigDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: resourceConfigBasic(nodebalancerName),
+				Config: tmpl.Basic(t, nodebalancerName),
 				Check: resource.ComposeTestCheckFunc(
 					checkNodeBalancerConfigExists,
 					resource.TestCheckResourceAttr(resName, "port", "8080"),
@@ -214,7 +214,7 @@ func TestAccResourceNodeBalancerConfig_update(t *testing.T) {
 				),
 			},
 			{
-				Config: resourceConfigUpdates(nodebalancerName),
+				Config: tmpl.Updates(t, nodebalancerName),
 				Check: resource.ComposeTestCheckFunc(
 					checkNodeBalancerConfigExists,
 					resource.TestCheckResourceAttr(resName, "port", "8088"),
@@ -244,7 +244,7 @@ func TestAccResourceNodeBalancerConfig_proxyProtocol(t *testing.T) {
 		CheckDestroy: checkNodeBalancerConfigDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: resourceConfigProxyProtocol(nodebalancerName),
+				Config: tmpl.ProxyProtocol(t, nodebalancerName),
 				Check: resource.ComposeTestCheckFunc(
 					checkNodeBalancerConfigExists,
 					resource.TestCheckResourceAttr(resName, "port", "80"),
@@ -336,10 +336,6 @@ func resourceImportStateID(s *terraform.State) (string, error) {
 	return "", fmt.Errorf("Error finding linode_nodebalancer_config")
 }
 
-type TemplateData struct {
-	NodeBalancer balancer.TemplateData
-}
-
 func resourceBalancerConfig(nodebalancer string) string {
 	return fmt.Sprintf(`
 resource "linode_nodebalancer" "foobar" {
@@ -360,53 +356,6 @@ resource "linode_nodebalancer_config" "foofig" {
 	check = "http"
 	check_passive = true
 	check_path = "/"
-}
-`
-}
-
-func resourceConfigSSL(nodebalancer string) string {
-	return resourceBalancerConfig(nodebalancer) + fmt.Sprintf(`
-resource "linode_nodebalancer_config" "foofig" {
-	nodebalancer_id = "${linode_nodebalancer.foobar.id}"
-	port = 8080
-	protocol = "https"
-	check = "http"
-	check_passive = true
-	check_path = "/"
-	ssl_cert = <<EOT
-%s
-EOT
-	ssl_key = <<EOT
-%s
-EOT
-}
-`, testCertifcate, testPrivateKey)
-}
-
-func resourceConfigProxyProtocol(nodebalancer string) string {
-	return resourceBalancerConfig(nodebalancer) + `
-resource "linode_nodebalancer_config" "foofig" {
-	nodebalancer_id = "${linode_nodebalancer.foobar.id}"
-	port = 80
-	protocol = "tcp"
-	proxy_protocol = "v2"
-}
-`
-}
-
-func resourceConfigUpdates(nodebalancer string) string {
-	return resourceBalancerConfig(nodebalancer) + `
-resource "linode_nodebalancer_config" "foofig" {
-	nodebalancer_id = "${linode_nodebalancer.foobar.id}"
-	port = 8088
-	protocol = "http"
-	check = "http"
-	check_path = "/foo"
-	check_attempts = 3
-	check_timeout = 30
-	check_passive = false
-	stickiness = "http_cookie"
-	algorithm = "source"
 }
 `
 }
