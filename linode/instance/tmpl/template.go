@@ -11,6 +11,7 @@ type TemplateData struct {
 	PubKey string
 	Type string
 	Image string
+	Group string
 
 	SwapSize int
 
@@ -301,5 +302,20 @@ func DiskStackScript(t *testing.T, label, pubKey string) string {
 		"instance_disk_stackscript", TemplateData{
 			Label: label,
 			PubKey: pubKey,
+		})
+}
+
+func DataBasic(t *testing.T, label string) string {
+	return acceptance.ExecuteTemplate(t,
+		"instance_data_basic", TemplateData{
+			Label: label,
+		})
+}
+
+func DataMultiple(t *testing.T, label, group string) string {
+	return acceptance.ExecuteTemplate(t,
+		"instance_data_multiple", TemplateData{
+			Label: label,
+			Group: group,
 		})
 }
