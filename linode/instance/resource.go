@@ -221,6 +221,19 @@ func createResource(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	d.SetId(fmt.Sprintf("%d", instance.ID))
 
+	if sharedIPs, ok := d.GetOk("shared_ips"); ok {
+		sharedIPs := helper.ExpandStringSet(sharedIPs.(*schema.Set))
+
+		err := client.ShareIPAddresses(ctx, linodego.IPAddressesShareOptions{
+			IPs:      sharedIPs,
+			LinodeID: instance.ID,
+		})
+
+		if err != nil {
+			return diag.Errorf("failed to share ips with instance %d: %s", instance.ID, err)
+		}
+	}
+
 	var ips []string
 	for _, ip := range instance.IPv4 {
 		ips = append(ips, ip.String())
@@ -563,6 +576,19 @@ func updateResource(ctx context.Context, d *schema.ResourceData, meta interface{
 			return diag.Errorf("failed to set boot config interfaces: %s", err)
 		}
 		rebootInstance = true
+	}
+
+	if d.HasChange("shared_ips") {
+		sharedIPs := helper.ExpandStringSet(d.Get("shared_ips").(*schema.Set))
+
+		err := client.ShareIPAddresses(ctx, linodego.IPAddressesShareOptions{
+			IPs:      sharedIPs,
+			LinodeID: instance.ID,
+		})
+
+		if err != nil {
+			return diag.Errorf("failed to share ips with instance %d: %s", instance.ID, err)
+		}
 	}
 
 	if rebootInstance && len(diskIDLabelMap) > 0 && len(updatedConfigMap) > 0 && bootConfig > 0 {

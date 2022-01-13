@@ -233,6 +233,12 @@ var resourceSchema = map[string]*schema.Schema{
 		Optional: true,
 		Default:  true,
 	},
+	"shared_ips": {
+		Type:        schema.TypeSet,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Description: "A list of secondary Linode IPs to share with this Linode.",
+		Optional:    true,
+	},
 	"specs": {
 		Computed:    true,
 		Description: "Information about the resources available to this Linode.",
