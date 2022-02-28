@@ -61,11 +61,7 @@ func readResource(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.Errorf("Error getting the IPs for Linode instance %s: %s", d.Id(), err)
 	}
 
-	var ips []string
-	for _, ip := range instance.IPv4 {
-		ips = append(ips, ip.String())
-	}
-	d.Set("ipv4", ips)
+	d.Set("ipv4", ipv4SliceToString(instance.IPv4))
 	d.Set("ipv6", instance.IPv6)
 	public, private := instanceNetwork.IPv4.Public, instanceNetwork.IPv4.Private
 

@@ -2,6 +2,7 @@ package linode
 
 import (
 	"context"
+	"github.com/linode/terraform-provider-linode/linode/instanceipshare"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -156,6 +157,7 @@ func Provider() *schema.Provider {
 			"linode_image":                 image.Resource(),
 			"linode_instance":              instance.Resource(),
 			"linode_instance_ip":           instanceip.Resource(),
+			"linode_instance_ip_share":   instanceipshare.Resource(),
 			"linode_ipv6_range":            ipv6range.Resource(),
 			"linode_lke_cluster":           lke.Resource(),
 			"linode_nodebalancer":          nb.Resource(),

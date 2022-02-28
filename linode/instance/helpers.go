@@ -946,3 +946,23 @@ func detachConfigVolumes(
 
 	return nil
 }
+
+func ipv4SliceToString(ips []*net.IP) []string {
+	result := make([]string, len(ips))
+
+	for i, ip := range ips {
+		result[i] = ip.String()
+	}
+
+	return result
+}
+
+func instanceIPSliceToString(ips []*linodego.InstanceIP) []string {
+	result := make([]string, len(ips))
+
+	for i, ip := range ips {
+		result[i] = ip.Address
+	}
+
+	return result
+}
