@@ -61,13 +61,11 @@ func readResource(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.Errorf("Error getting the IPs for Linode instance %s: %s", d.Id(), err)
 	}
 
-	var ips []string
-	for _, ip := range instance.IPv4 {
-		ips = append(ips, ip.String())
-	}
-	d.Set("ipv4", ips)
+	d.Set("ipv4", ipv4SliceToString(instance.IPv4))
 	d.Set("ipv6", instance.IPv6)
 	public, private := instanceNetwork.IPv4.Public, instanceNetwork.IPv4.Private
+
+	d.Set("shared_ips", instanceIPSliceToString(instanceNetwork.IPv4.Shared))
 
 	if len(public) > 0 {
 		d.Set("ip_address", public[0].Address)
@@ -234,6 +232,17 @@ func createResource(ctx context.Context, d *schema.ResourceData, meta interface{
 			d.Set("private_ip_address", address.String())
 		} else {
 			d.Set("ip_address", address.String())
+		}
+	}
+
+	sharedIPs := helper.ExpandStringSet(d.Get("shared_ips").(*schema.Set))
+	if len(sharedIPs) > 0 {
+		err := client.ShareIPAddresses(ctx, linodego.IPAddressesShareOptions{
+			IPs:      sharedIPs,
+			LinodeID: instance.ID,
+		})
+		if err != nil {
+			return diag.Errorf("failed to share ip addresses: %s", err)
 		}
 	}
 
@@ -466,6 +475,16 @@ func updateResource(ctx context.Context, d *schema.ResourceData, meta interface{
 			if err = client.CancelInstanceBackups(ctx, instance.ID); err != nil {
 				return diag.FromErr(err)
 			}
+		}
+	}
+
+	if d.HasChange("shared_ips") {
+		sharedIPs := helper.ExpandStringSet(d.Get("shared_ips").(*schema.Set))
+		if err := client.ShareIPAddresses(ctx, linodego.IPAddressesShareOptions{
+			IPs:      sharedIPs,
+			LinodeID: instance.ID,
+		}); err != nil {
+			return diag.Errorf("failed to update ip sharing: %s", err)
 		}
 	}
 

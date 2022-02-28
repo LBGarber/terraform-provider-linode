@@ -232,6 +232,13 @@ var resourceSchema = map[string]*schema.Schema{
 		Computed: true,
 		Default:  nil,
 	},
+	"shared_ips": {
+		Type:        schema.TypeSet,
+		Description: "IPs shared with this Linode.",
+		Optional:    true,
+		Computed:    true,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+	},
 	"watchdog_enabled": {
 		Type: schema.TypeBool,
 		Description: "The watchdog, named Lassie, is a Shutdown Watchdog that monitors your Linode and will " +
