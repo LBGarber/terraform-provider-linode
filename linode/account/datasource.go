@@ -2,6 +2,7 @@ package account
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -23,6 +24,7 @@ func readDataSource(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.Errorf("Error getting account: %s", err)
 	}
 
+	fmt.Println("SDF")
 	d.SetId(account.Email)
 	d.Set("email", account.Email)
 	d.Set("first_name", account.FirstName)
