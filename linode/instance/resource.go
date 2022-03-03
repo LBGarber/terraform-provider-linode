@@ -448,7 +448,7 @@ func updateResource(ctx context.Context, d *schema.ResourceData, meta interface{
 		simpleUpdate = true
 	}
 
-	fmt.Println("changed")
+	fmt.Println("changed again")
 	// apply staged simple updates early
 	if simpleUpdate {
 		instanceID := instance.ID
