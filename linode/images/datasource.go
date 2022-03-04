@@ -17,7 +17,7 @@ func DataSource() *schema.Resource {
 }
 
 func readDataSource(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return diag.Errorf("oh no i broke something")
+	//return diag.Errorf("oh no i broke something")
 
 	results, err := filterConfig.FilterDataSource(ctx, d, meta, listImages, flattenImage)
 	if err != nil {
