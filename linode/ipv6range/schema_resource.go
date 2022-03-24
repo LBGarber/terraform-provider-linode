@@ -48,4 +48,10 @@ var resourceSchema = map[string]*schema.Schema{
 		Description: "The region for this range of IPv6 addresses.",
 		Computed:    true,
 	},
+	"shared_linodes": {
+		Type: schema.TypeSet,
+		Description: "",
+		Optional: true,
+		Elem: &schema.Schema{Type: schema.TypeInt},
+	},
 }
