@@ -27,17 +27,10 @@ jobs:
         uses: actions/setup-go@37335c7bb261b353407cff977110895fa0b4f7d8 # pin@v2
         with:
           go-version: 1.17
-      - name: Import GPG key
-        id: import_gpg
-        uses: paultyng/ghaction-import-gpg@53deb67fe3b05af114ad9488a4da7b782455d588 # pin@v2.1.0
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          PASSPHRASE: ${{ secrets.PASSPHRASE }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@ac067437f516133269923265894e77920c3dce18 # pin@v2
         with:
           version: latest
           args: release --rm-dist
         env:
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
